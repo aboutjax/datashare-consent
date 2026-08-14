@@ -405,6 +405,50 @@
     linear-gradient(90deg, rgb(94 77 178) 0%, rgb(94 77 178) 100%);
 }
 
+/* Barber pole for the pending banner: diagonal brand stripes travelling right
+   for as long as the check runs. It measures nothing, which is the point —
+   there is no progress to report, only the fact that it is still going.
+   The stripes are 8px wide on a 45° axis, so one period is 8px × 2 × √2 =
+   22.63px across; the layer slides exactly that far and restarts, which the
+   repeat makes seamless. It carries a linear curve because a barber pole that
+   eases has a rhythm, and a rhythm implies a step being completed. */
+@utility pending-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, var(--primary) 14%, transparent) 0 8px,
+    transparent 8px 16px
+  );
+  animation: pending-stripes 0.8s linear infinite;
+}
+
+@keyframes pending-stripes {
+  to {
+    transform: translateX(22.63px);
+  }
+}
+
+/* The label sits in the middle of the barber pole, and stripes running under
+   type break the shapes of the letters. This thins the pattern to a fifth of
+   its strength across the centre so the line reads cleanly, and returns it to
+   full at both ends where nothing is competing with it.
+ *
+ * Belongs on a wrapper, never on the striped layer itself: a mask is painted
+ * in the element's own coordinates, so on the moving layer the soft window
+ * would travel with the stripes and the clearing would drift off the text.
+ *
+ * An SVG rather than a CSS gradient because `preserveAspectRatio='none'`
+ * stretches the ramp to whatever the banner is wide, so the clearing stays
+ * over the label at every card width instead of being pinned to pixels. */
+@utility pending-stripes-fade {
+  --pending-fade: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none' viewBox='0 0 100 10'><linearGradient id='f' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='white' stop-opacity='1'/><stop offset='0.06' stop-color='white' stop-opacity='1'/><stop offset='0.31' stop-color='white' stop-opacity='0.18'/><stop offset='0.69' stop-color='white' stop-opacity='0.18'/><stop offset='0.94' stop-color='white' stop-opacity='1'/><stop offset='1' stop-color='white' stop-opacity='1'/></linearGradient><rect width='100' height='10' fill='url(%23f)'/></svg>");
+  -webkit-mask-image: var(--pending-fade);
+  mask-image: var(--pending-fade);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 /* -------------------------------------------------------------------- *
  * Web type ramp — complete named styles (family + weight + size + LH + LS)
  * -------------------------------------------------------------------- */

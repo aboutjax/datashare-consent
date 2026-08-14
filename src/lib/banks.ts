@@ -14,10 +14,13 @@ export type BankAccount = {
 export type Bank = {
   id: string
   name: string
-  /** Initials shown in place of a logo we are not licensed to ship. */
-  mark: string
-  /** Brand tint for the mark tile. */
-  tint: string
+  /** Institution logo, drawn into the rounded tile that stands next to the name. */
+  logo: string
+  /**
+   * Marks that ship with their own brand-coloured field fill the tile edge to
+   * edge; marks that ship transparent sit inset on a white plate instead.
+   */
+  logoFit: "cover" | "contain"
   accounts: BankAccount[]
 }
 
@@ -52,57 +55,36 @@ export const banks: Bank[] = [
   {
     id: "chase",
     name: "Chase",
-    mark: "CH",
-    tint: "bg-[#117aca]",
+    logo: "/assets/banks/chase.png",
+    logoFit: "cover",
     accounts: businessAccounts,
   },
   {
-    id: "bank-of-america",
-    name: "Bank of America",
-    mark: "BA",
-    tint: "bg-[#e31837]",
+    id: "td-bank",
+    name: "TD Bank",
+    logo: "/assets/banks/td-bank.png",
+    logoFit: "cover",
     accounts: businessAccounts,
   },
   {
     id: "wells-fargo",
     name: "Wells Fargo",
-    mark: "WF",
-    tint: "bg-[#b31b1b]",
+    logo: "/assets/banks/wells-fargo.png",
+    logoFit: "cover",
     accounts: businessAccounts,
   },
   {
     id: "citibank",
     name: "Citibank",
-    mark: "CI",
-    tint: "bg-[#056dae]",
+    logo: "/assets/banks/citibank.png",
+    logoFit: "contain",
     accounts: businessAccounts,
   },
   {
     id: "capital-one",
     name: "Capital One",
-    mark: "C1",
-    tint: "bg-[#004977]",
-    accounts: businessAccounts,
-  },
-  {
-    id: "us-bank",
-    name: "U.S. Bank",
-    mark: "US",
-    tint: "bg-[#0c2074]",
-    accounts: businessAccounts,
-  },
-  {
-    id: "pnc",
-    name: "PNC Bank",
-    mark: "PN",
-    tint: "bg-[#f58025]",
-    accounts: businessAccounts,
-  },
-  {
-    id: "mercury",
-    name: "Mercury",
-    mark: "ME",
-    tint: "bg-[#5b4bd6]",
+    logo: "/assets/banks/capital-one.png",
+    logoFit: "contain",
     accounts: businessAccounts,
   },
 ]

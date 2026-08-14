@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 
 /** The steps of the flow, in the order they are walked through. */
-export const steps = ["connect", "consent", "confirming", "checking"] as const
+export const steps = ["connect", "consent", "confirming"] as const
 
 /** One step of the flow. */
 export type Step = (typeof steps)[number]
@@ -17,6 +17,16 @@ export type StepPosition = "before" | "active" | "after"
  *
  * Only the content moves: the card and its illustration hold still.
  */
+/**
+ * The timing the anchored action block resizes with. Same half second and
+ * same ease-out curve the steps crossfade on, so the block settling into its
+ * new height reads as part of that one swap rather than a second event.
+ */
+export const settle = {
+  duration: 0.5,
+  ease: [0, 0, 0.2, 1],
+} as const
+
 export function rise(position: StepPosition, delay?: string) {
   return cn(
     // `translate`, not `transform`: Tailwind v4 emits the movement as the

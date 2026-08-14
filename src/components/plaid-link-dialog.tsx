@@ -377,7 +377,7 @@ function CredentialsStage({
       >
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-3 text-center">
-            <BankMark bank={bank} className="size-14 rounded-2xl text-base" />
+            <BankMark bank={bank} className="size-14 rounded-2xl" />
             <DialogTitle className="text-xl leading-7 font-semibold">
               Enter your {bank.name} credentials
             </DialogTitle>
@@ -421,7 +421,7 @@ function ConnectingStage({ bank }: { bank: Bank }) {
     <Stage action={null}>
       <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
         <span className="relative flex size-14 items-center justify-center">
-          <BankMark bank={bank} className="size-14 rounded-2xl text-base" />
+          <BankMark bank={bank} className="size-14 rounded-2xl" />
           <span className="absolute -inset-3 rounded-full border-2 border-foreground/10 border-t-foreground/60 motion-safe:animate-spin" />
         </span>
         <div className="flex flex-col gap-1">
