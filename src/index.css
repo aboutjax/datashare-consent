@@ -449,6 +449,111 @@
   mask-repeat: no-repeat;
 }
 
+/* The card as a physical object: it turns towards the cursor and carries a
+   specular highlight where the cursor is. The two are one effect — a flat
+   surface that tilts without its lighting changing looks like a picture on a
+   hinge, and a highlight that slides across a surface that never moves looks
+   like a gradient. Together they read as a card being turned in the hand.
+ *
+ * Everything is driven by four values the component writes on pointermove:
+ * the cursor in the card's own coordinates, and the angles derived from it.
+ * They are registered so they interpolate, which is what the short transition
+ * buys — the surface trails the cursor by a frame or two rather than being
+ * welded to it, which is most of what sells the weight.
+ *
+ * `--sheen-x/y` inherit because the highlight is painted by the pseudo
+ * element while the cursor is measured on the card itself; the angles do not
+ * need to, since the transform they feed is on the card. */
+@property --sheen-x {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --sheen-y {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --tilt-x {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --tilt-y {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* Ramps 0 → 1 on hover so the card rises into the tilt and settles back flat
+   on the way out. Scaling the angles is what makes that possible: the cursor
+   keeps writing them right up to the edge of the card, so transitioning the
+   angles themselves would swing the card to whatever the last position was
+   instead of returning it to rest. */
+@property --tilt-strength {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@utility card-sheen {
+  position: relative;
+  /* Shallow enough that 6° at the far corner is a lean rather than a fold.
+     The card is 326px across, so a 900px viewer distance is roughly arm's
+     length — the depth cue matches the size the object is drawn at. */
+  transform: perspective(900px) rotateX(calc(var(--tilt-x) * var(--tilt-strength)))
+    rotateY(calc(var(--tilt-y) * var(--tilt-strength)));
+  /* The hover lift is in here rather than in a Tailwind `transition-*` class
+     because the tracked values have to be transitioned on this element: they
+     change here, and the pseudo element only inherits the result. Two
+     transition declarations on one element would mean one silently losing. */
+  transition:
+    translate 200ms ease-out,
+    --tilt-strength 260ms ease-out,
+    --tilt-x 110ms ease-out,
+    --tilt-y 110ms ease-out,
+    --sheen-x 110ms ease-out,
+    --sheen-y 110ms ease-out;
+
+  &:hover {
+    --tilt-strength: 1;
+  }
+
+  /* Taller than it is wide, because the light it stands in for is a window
+     or a ceiling strip rather than a bulb. Large and soft — 62% × 88% of the
+     card — so the highlight is a wash rather than a spot, and peaks at 8%
+     white, which on the card's navy is felt more than seen. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(
+      62% 88% at var(--sheen-x) var(--sheen-y),
+      rgb(255 255 255 / 0.08) 0%,
+      rgb(255 255 255 / 0.03) 45%,
+      transparent 80%
+    );
+    transition: opacity 200ms ease-out;
+  }
+
+  &:hover::after {
+    opacity: 1;
+  }
+
+  /* The highlight stays — it is a property of the surface, not an animation,
+     and it moves only while the cursor does. The turn goes: it moves the
+     whole object under a pointer that is not asking it to. */
+  @media (prefers-reduced-motion: reduce) {
+    transform: none;
+    transition: none;
+  }
+}
+
 /* -------------------------------------------------------------------- *
  * Web type ramp — complete named styles (family + weight + size + LH + LS)
  * -------------------------------------------------------------------- */

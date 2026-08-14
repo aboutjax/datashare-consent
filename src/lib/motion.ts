@@ -10,14 +10,6 @@ export type Step = (typeof steps)[number]
 export type StepPosition = "before" | "active" | "after"
 
 /**
- * Staggered entrance for the content of a step. Each element waits below the
- * line, rises into place when its step becomes active, then keeps travelling
- * up and out when the next step arrives — so the sequence reads as one
- * continuous climb rather than three unrelated screens.
- *
- * Only the content moves: the card and its illustration hold still.
- */
-/**
  * The timing the anchored action block resizes with. Same half second and
  * same ease-out curve the steps crossfade on, so the block settling into its
  * new height reads as part of that one swap rather than a second event.
@@ -27,6 +19,11 @@ export const settle = {
   ease: [0, 0, 0.2, 1],
 } as const
 
+/**
+ * Everything that is not the step's copy: the badge and the plane. Their
+ * entrance is held to the copy's beat by the caller, which reads it off the
+ * dials rather than hard-coding it here.
+ */
 export function rise(position: StepPosition, delay?: string) {
   return cn(
     // `translate`, not `transform`: Tailwind v4 emits the movement as the

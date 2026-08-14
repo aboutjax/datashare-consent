@@ -1,3 +1,6 @@
+import { DialRoot } from "dialkit"
+import "dialkit/styles.css"
+
 import { ConsentCard } from "@/components/consent-card"
 
 export function App() {
@@ -6,6 +9,10 @@ export function App() {
       <div className="mx-auto w-full max-w-240">
         <ConsentCard />
       </div>
+
+      {/* Renders nothing in a production build unless asked to, so the tuning
+          panel can live in the tree rather than behind a flag. */}
+      <DialRoot position="top-right" />
     </div>
   )
 }

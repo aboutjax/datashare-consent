@@ -1,21 +1,50 @@
 import { useState } from "react"
 
+import { StepBody, StepHeading } from "@/components/step-copy"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { rise, type StepPosition } from "@/lib/motion"
+import { useStepCopyMotion, useStepHeading } from "@/lib/step-motion"
 import { cn } from "@/lib/utils"
 
+const needPermission = "/assets/need-permission.png"
+
 export function ConsentPanel({ position }: { position: StepPosition }) {
+  const { heading } = useStepCopyMotion()
+  const title = useStepHeading("consent")
+
   return (
-    <div className={cn("flex flex-col gap-2", rise(position))}>
-      <h2 className="type-title-1-emphasized text-balance text-foreground">
-        See if you qualify for the Nav Credit Builder Card
-      </h2>
-      <p className="type-body-1 text-muted-foreground">
-        Parafin reviews your connected bank data to see what credit limit you
-        may qualify for, based on your revenue, not your credit scores.
-      </p>
+    <div className="flex flex-col gap-3">
+      {/* A beat ahead of the heading, the way the plane leads the last step:
+          the permission being asked for is the picture, and the words explain
+          it. */}
+      <img
+        src={needPermission}
+        alt=""
+        className={cn("size-20 max-w-none object-contain", rise(position))}
+        style={
+          position === "active"
+            ? { transitionDelay: `${Math.max(0, heading.delay - 0.05)}s` }
+            : undefined
+        }
+      />
+
+      <div className="flex flex-col gap-2">
+        <StepHeading
+          position={position}
+          className="type-title-1-emphasized text-foreground"
+        >
+          {title}
+        </StepHeading>
+        <StepBody
+          position={position}
+          className="type-body-1 text-balance text-muted-foreground"
+        >
+          Parafin reviews your connected bank data to see what credit limit you
+          may qualify for, based on your revenue, not your credit scores.
+        </StepBody>
+      </div>
     </div>
   )
 }

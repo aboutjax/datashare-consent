@@ -1,55 +1,48 @@
+import { StepBody, StepHeading } from "@/components/step-copy"
 import { Button } from "@/components/ui/button"
 import { rise, type StepPosition } from "@/lib/motion"
+import { useStepCopyMotion, useStepHeading } from "@/lib/step-motion"
 import { cn } from "@/lib/utils"
 
-const planeBg = "/assets/plane-bg.svg"
-const planeLineArt = "/assets/plane-lineart.png"
+const confirmation = "/assets/confirmation.png"
 
 /** The last step: the sharing is done, and the review it started runs on
  *  without the reader. Nothing here asks for anything. */
 export function ConfirmationPanel({ position }: { position: StepPosition }) {
+  const { heading } = useStepCopyMotion()
+  const title = useStepHeading("confirming")
+
   return (
     <div className="flex flex-col gap-3">
-      {/* Hand-drawn plane, with the purple wash filling its fold. The wash is
-          a wrapper the insets can size: on the image itself the intrinsic
-          dimensions would win and it would spill out. */}
-      <div
-        className={cn(
-          "relative size-[112px] transition-[opacity,translate,rotate] duration-700 ease-out motion-reduce:transition-none",
+      {/* A beat ahead of the heading, the way the permission picture leads the
+          step before it: the confirmation is the picture, and the words
+          explain it. */}
+      <img
+        src={confirmation}
+        alt=""
+        className={cn("size-20 max-w-none object-contain", rise(position))}
+        style={
           position === "active"
-            ? "translate-x-0 translate-y-0 rotate-0 opacity-100 delay-100"
-            : "-translate-x-2 translate-y-3 -rotate-6 opacity-0"
-        )}
-      >
-        <div className="absolute inset-[18.17%_18.27%_35.61%_28.24%]">
-          <img src={planeBg} alt="" className="size-full max-w-none" />
-        </div>
-        <img
-          src={planeLineArt}
-          alt=""
-          className="absolute top-[15px] left-1/2 size-[83px] max-w-none -translate-x-1/2 object-cover"
-        />
-      </div>
+            ? { transitionDelay: `${Math.max(0, heading.delay - 0.05)}s` }
+            : undefined
+        }
+      />
 
       <div className="flex flex-col gap-2">
-        <h2
-          className={cn(
-            "type-title-1-emphasized text-balance text-foreground",
-            rise(position, "delay-200")
-          )}
+        <StepHeading
+          position={position}
+          className="type-title-1-emphasized text-foreground"
         >
-          You&rsquo;re all set!
-        </h2>
-        <p
-          className={cn(
-            "type-body-2 text-muted-foreground",
-            rise(position, "delay-[250ms]")
-          )}
+          {title}
+        </StepHeading>
+        <StepBody
+          position={position}
+          className="type-body-2 text-balance text-muted-foreground"
         >
           We review your eligibility automatically. Connecting more bank
           accounts gives us a fuller picture of your revenue and may help you
           qualify.
-        </p>
+        </StepBody>
       </div>
     </div>
   )

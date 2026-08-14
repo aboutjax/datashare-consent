@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useReducer, useState } from "react"
 import { AnimatePresence, motion, MotionConfig } from "motion/react"
 
 import { ActionBento, type BentoBanner } from "@/components/action-bento"
@@ -12,6 +12,7 @@ import { PlaidLinkDialog } from "@/components/plaid-link-dialog"
 import { ShelfIllustration } from "@/components/shelf-illustration"
 import { type BankConnection } from "@/lib/banks"
 import { settle, steps, type Step, type StepPosition } from "@/lib/motion"
+import { useFlowDials } from "@/lib/step-motion"
 import { cn } from "@/lib/utils"
 
 function positionOf(step: Step, current: Step): StepPosition {
@@ -21,16 +22,15 @@ function positionOf(step: Step, current: Step): StepPosition {
 }
 
 /**
- * Fades a step in and out; the content inside it carries the movement. The
- * outgoing step clears faster than the incoming one arrives, so the two never
- * sit on top of each other at half strength.
+ * Stacks the steps in one cell. It deliberately does not fade them: every
+ * element inside a step animates itself, and a wrapper fade would clip those
+ * exits (the heading alone takes two thirds of a second to leave) and
+ * double-fade whatever survived.
  */
-function fade(position: StepPosition) {
+function slot(position: StepPosition) {
   return cn(
-    "col-start-1 row-start-1 transition-opacity ease-out motion-reduce:transition-none",
-    position === "active"
-      ? "opacity-100 delay-150 duration-500"
-      : "opacity-0 duration-200"
+    "col-start-1 row-start-1",
+    position !== "active" && "pointer-events-none"
   )
 }
 
@@ -48,9 +48,13 @@ const banners: Record<"consent" | "confirming", BentoBanner> = {
 }
 
 export function ConsentCard() {
-  const [phase, setPhase] = useState<Step>("connect")
   const [linkOpen, setLinkOpen] = useState(false)
   const [connection, setConnection] = useState<BankConnection | null>(null)
+  // Replaying remounts the copy, which is the only way to watch an entrance
+  // again without walking the flow back to the step before it.
+  const [take, replay] = useReducer((n: number) => n + 1, 0)
+
+  const { step: phase, goTo } = useFlowDials(replay)
 
   return (
     // One transition for everything motion drives, and reduced motion is
@@ -61,28 +65,34 @@ export function ConsentCard() {
           would stack their half-transparent selves and wash the panel out
           mid-swap — and the card could not climb continuously if each step
           drew its own. */}
-      <div className="relative flex overflow-hidden rounded-2xl bg-card shadow-raised lg:min-h-100">
+      {/* The floor is the tallest step (consent, whose action carries both the
+          checkbox and the button), so the card is that height on every step
+          and never resizes as the flow advances. Only the action block inside
+          it moves, and the reading area above absorbs the difference. */}
+      {/* `group` so the illustration can watch the action beside it: the card
+          leans towards whoever is reaching for the connect button. */}
+      <div className="group relative flex overflow-hidden rounded-2xl bg-card shadow-raised lg:min-h-122.5">
         <div className="z-10 flex min-w-0 flex-1 flex-col gap-3 p-6">
           {/* The steps' copy shares one grid cell, so the reading area is as
               tall as the longest of them and does not resize between steps.
               Only the action below it changes height. */}
-          <div className="grid min-w-0 flex-1">
+          <div key={take} className="grid min-w-0 flex-1">
             <div
-              className={fade(positionOf("connect", phase))}
+              className={slot(positionOf("connect", phase))}
               inert={phase !== "connect"}
             >
               <ConnectPanel position={positionOf("connect", phase)} />
             </div>
 
             <div
-              className={fade(positionOf("consent", phase))}
+              className={slot(positionOf("consent", phase))}
               inert={phase !== "consent"}
             >
               <ConsentPanel position={positionOf("consent", phase)} />
             </div>
 
             <div
-              className={fade(positionOf("confirming", phase))}
+              className={slot(positionOf("confirming", phase))}
               inert={phase !== "confirming"}
             >
               <ConfirmationPanel position={positionOf("confirming", phase)} />
@@ -110,7 +120,7 @@ export function ConsentCard() {
                 banner={banners[phase]}
               >
                 {phase === "consent" ? (
-                  <ConsentAction onSubmit={() => setPhase("confirming")} />
+                  <ConsentAction onSubmit={() => goTo("confirming")} />
                 ) : (
                   <ConfirmationAction />
                 )}
@@ -128,7 +138,7 @@ export function ConsentCard() {
         onComplete={(next) => {
           setConnection(next)
           setLinkOpen(false)
-          setPhase("consent")
+          goTo("consent")
         }}
       />
     </MotionConfig>

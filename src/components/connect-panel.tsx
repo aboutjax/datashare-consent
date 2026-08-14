@@ -1,34 +1,44 @@
+import { StepBody, StepHeading } from "@/components/step-copy"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { rise, type StepPosition } from "@/lib/motion"
-import { cn } from "@/lib/utils"
+import { useStepCopyMotion, useStepHeading } from "@/lib/step-motion"
 
 export function ConnectPanel({ position }: { position: StepPosition }) {
+  const { heading } = useStepCopyMotion()
+  const title = useStepHeading("connect")
+
   return (
     <div className="flex flex-col items-start gap-2">
-      <Badge variant="warn" className={rise(position)}>
+      {/* Held to the same beat the copy waits for, so the badge leads the
+          heading instead of arriving while the last step is still leaving. */}
+      <Badge
+        variant="warn"
+        className={rise(position)}
+        style={
+          position === "active"
+            ? { transitionDelay: `${heading.delay}s` }
+            : undefined
+        }
+      >
         No bank connected yet
       </Badge>
 
-      <h2
-        className={cn(
-          "type-title-1-emphasized text-balance text-foreground",
-          rise(position, "delay-75")
-        )}
+      <StepHeading
+        position={position}
+        className="type-title-1-emphasized text-foreground"
       >
-        See if you qualify for the Nav Credit Builder Card
-      </h2>
+        {title}
+      </StepHeading>
 
-      <p
-        className={cn(
-          "type-body-1 text-muted-foreground",
-          rise(position, "delay-150")
-        )}
+      <StepBody
+        position={position}
+        className="type-body-1 text-balance text-muted-foreground"
       >
         Your limit is based on your business&rsquo;s revenue and other
         underwriting criteria. It is reviewed regularly and can increase as your
         business grows. No business or personal credit checks required.
-      </p>
+      </StepBody>
     </div>
   )
 }
@@ -38,7 +48,12 @@ export function ConnectPanel({ position }: { position: StepPosition }) {
 export function ConnectAction({ onConnect }: { onConnect: () => void }) {
   return (
     <div className="flex w-full flex-col gap-2">
+      {/* Marks this as the control the card answers to: reaching for it lifts
+          the card a little out of its shelf, which is the climb this step ends
+          in. The illustration finds it by attribute, so the two can sit in
+          different corners of the layout without a prop between them. */}
       <Button
+        data-card-hint
         onClick={onConnect}
         className="h-12 w-full rounded-[6px] brand-sheen type-body-1-emphasized shadow-brand-raised hover:bg-primary hover:brightness-105"
       >
