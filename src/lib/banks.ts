@@ -14,13 +14,12 @@ export type BankAccount = {
 export type Bank = {
   id: string
   name: string
-  /** Institution logo, drawn into the rounded tile that stands next to the name. */
-  logo: string
   /**
-   * Marks that ship with their own brand-coloured field fill the tile edge to
-   * edge; marks that ship transparent sit inset on a white plate instead.
+   * Institution logo, drawn into the rounded tile that stands next to the
+   * name. Every mark is a square that carries its own brand-coloured field,
+   * so the tiles all hold the same weight down the list.
    */
-  logoFit: "cover" | "contain"
+  logo: string
   accounts: BankAccount[]
 }
 
@@ -56,35 +55,30 @@ export const banks: Bank[] = [
     id: "chase",
     name: "Chase",
     logo: "/assets/banks/chase.png",
-    logoFit: "cover",
     accounts: businessAccounts,
   },
   {
     id: "td-bank",
     name: "TD Bank",
     logo: "/assets/banks/td-bank.png",
-    logoFit: "cover",
     accounts: businessAccounts,
   },
   {
     id: "wells-fargo",
     name: "Wells Fargo",
     logo: "/assets/banks/wells-fargo.png",
-    logoFit: "cover",
     accounts: businessAccounts,
   },
   {
     id: "citibank",
     name: "Citibank",
     logo: "/assets/banks/citibank.png",
-    logoFit: "contain",
     accounts: businessAccounts,
   },
   {
     id: "capital-one",
     name: "Capital One",
     logo: "/assets/banks/capital-one.png",
-    logoFit: "contain",
     accounts: businessAccounts,
   },
 ]
