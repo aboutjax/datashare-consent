@@ -418,7 +418,7 @@
     color-mix(in oklab, var(--primary) 14%, transparent) 0 8px,
     transparent 8px 16px
   );
-  animation: pending-stripes 0.8s linear infinite;
+  animation: pending-stripes 2s linear infinite;
 }
 
 @keyframes pending-stripes {
@@ -504,7 +504,8 @@
   /* Shallow enough that 6° at the far corner is a lean rather than a fold.
      The card is 326px across, so a 900px viewer distance is roughly arm's
      length — the depth cue matches the size the object is drawn at. */
-  transform: perspective(900px) rotateX(calc(var(--tilt-x) * var(--tilt-strength)))
+  transform: perspective(900px)
+    rotateX(calc(var(--tilt-x) * var(--tilt-strength)))
     rotateY(calc(var(--tilt-y) * var(--tilt-strength)));
   /* The hover lift is in here rather than in a Tailwind `transition-*` class
      because the tracked values have to be transitioned on this element: they

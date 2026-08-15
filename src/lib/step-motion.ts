@@ -123,7 +123,7 @@ const pendingConfig = {
     // The only value the catalog has no opinion on: it is the reading time,
     // not the motion. At the shipped spec it puts a line's whole beat near two
     // seconds, which is the coarser rhythm above the 0.8s banner stripes.
-    hold: slider(700, 0, 3000, 50),
+    hold: slider(1200, 0, 3000, 50),
   },
   enter: transition(pending.enter),
   enterStagger: slider(15, 0, 150, 1),
@@ -169,7 +169,7 @@ const copyConfig = {
   confirming: {
     heading: {
       type: "text",
-      default: "You\u2019re all set!",
+      default: "You\u2019re all set! Offers can take up to 5 business days to process.",
       placeholder: "Confirmation heading",
     },
   },
@@ -226,9 +226,9 @@ function phaseVariants(
     },
     active: selfDelayed
       ? (delay: number) => ({
-          ...arrived,
-          transition: { ...toMotion(dials.enter), delay },
-        })
+        ...arrived,
+        transition: { ...toMotion(dials.enter), delay },
+      })
       : { ...arrived, transition: toMotion(dials.enter) },
     after: {
       opacity: 0,

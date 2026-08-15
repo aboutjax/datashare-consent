@@ -25,6 +25,23 @@ const emergence: Record<Step, string> = {
 }
 
 /**
+ * The same climb, for the card in the band at the head of the narrow layout.
+ * The offsets are a share of the card's own height, because that composition
+ * is sized off the panel's width.
+ *
+ * The band is only ever showing the top of the card, so the climb is what
+ * decides how much of it there is: a corner at the first step, half of it at
+ * the second, and at the last the whole face, square to the reader and a
+ * tenth larger. That last step is the only one that scales — it is the card
+ * finally being looked at head on rather than glimpsed.
+ */
+const headerEmergence: Record<Step, string> = {
+  connect: "translate-y-0 rotate-15 scale-100",
+  consent: "-translate-y-[11.2%] rotate-15 scale-100",
+  confirming: "-translate-y-[44.4%] rotate-0 scale-110",
+}
+
+/**
  * Holds the artwork on the panel's center line while the card climbs. The
  * layout box never changes size — the card moves by transform and is clipped
  * at the shelf — so what actually grows is the ink: the top corner of the
@@ -73,7 +90,129 @@ function trackPointer(event: PointerEvent<HTMLDivElement>) {
   card.style.setProperty("--tilt-y", `${fromCenterX * -2 * MAX_TILT}deg`)
 }
 
-/** The card-on-a-shelf illustration behind every step — one continuous
+/**
+ * The card itself: the artwork, the highlight the pointer moves across it,
+ * and the lift it takes when it — or the button its climb ends in — is
+ * reached for. Size and corner come from the caller, because the wide and the
+ * narrow composition draw the same card at different scales.
+ *
+ * Hover lives here rather than on whatever positions the card, because that
+ * parent owns the step climb: sharing one element would make the two
+ * transforms fight.
+ *
+ * Reaching for the connect button lifts it too, a shorter 6px against the 8px
+ * of touching the card itself — the same gesture at the distance it is being
+ * made from, and a first inch of the climb the step ends in. Focus counts as
+ * reaching: tabbing to the button shows it as well.
+ */
+function CardFace({ className }: { className?: string }) {
+  return (
+    <div
+      onPointerMove={trackPointer}
+      className={cn(
+        "card-sheen overflow-hidden shadow-artwork group-has-[[data-card-hint]:is(:hover,:focus-visible)]:-translate-y-1.5 hover:-translate-y-2 motion-reduce:group-has-[[data-card-hint]:is(:hover,:focus-visible)]:translate-y-0 motion-reduce:hover:translate-y-0",
+        className
+      )}
+    >
+      <img
+        src={cardImage}
+        alt="Nav Credit Builder Card"
+        /* Never the hit target, so the sheen offsets are always measured from
+           the card's own corner rather than from whatever the pointer landed
+           on. */
+        className="pointer-events-none size-full object-cover"
+      />
+    </div>
+  )
+}
+
+/**
+ * The two marks, at whatever size the caller asks for. Every measurement
+ * inside is in `em`, so the lockup is scaled by setting a font size rather
+ * than by keeping a second set of numbers for the smaller layout.
+ */
+function BrandLockup({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex items-center gap-[0.7em]", className)}>
+      {/* Sized rather than stretched between insets: preflight gives an image
+          `height: auto`, which over-constrains a top-and-bottom box and leaves
+          the mark at whatever size it was drawn at — right at one scale only,
+          and by accident. */}
+      <div className="relative h-[1em] w-[3.43em]">
+        <img
+          src={navIcon}
+          alt=""
+          className="absolute top-0 left-0 h-full w-[29.2%] object-contain"
+        />
+        <img
+          src={navText}
+          alt="Nav"
+          className="absolute top-[1%] left-[33.5%] h-[99%] w-[66.1%] object-contain"
+        />
+      </div>
+      <div className="h-[0.83em] w-px bg-outline-variant" />
+      <img
+        src={parafinLogo}
+        alt="Parafin"
+        className="h-[1.01em] w-[3.96em] object-contain"
+      />
+    </div>
+  )
+}
+
+/**
+ * The artwork as the narrow layout carries it: a full-bleed band across the
+ * head of the panel, with the card rising out of its lower edge and the two
+ * names on a pill in the corner. It is what the wide layout's column becomes
+ * when there is no room beside the copy to stand it in.
+ *
+ * The band is a window rather than a frame. The card is centred well below
+ * the lower edge, so only the top of it is ever on show and the rest is
+ * somewhere to climb from. Its depth is a fixed share of the panel's width,
+ * which keeps it the same band on every step — the copy underneath absorbs
+ * whatever each step's action needs instead. Every measurement inside is a
+ * share of that band, so the composition holds at any width the narrow layout
+ * is given.
+ */
+export function CardHeader({ step }: { step: Step }) {
+  return (
+    <div className="relative aspect-[375/164] w-full overflow-hidden lg:hidden">
+      {/* Both tints are centred outside the band, as they are outside the
+          panel in the wide layout: what lands inside is the falloff, never the
+          shape. Positioned by their own centre so the offsets stay legible at
+          this size — the artwork is several times wider than the band it
+          tints. */}
+      <img
+        src={ellipseBottom}
+        alt=""
+        className="pointer-events-none absolute top-[155%] left-[23.7%] w-[174%] max-w-none -translate-x-1/2 -translate-y-1/2"
+      />
+      <img
+        src={ellipseTop}
+        alt=""
+        className="pointer-events-none absolute top-0 left-[125.5%] w-[240%] max-w-none -translate-x-1/2 -translate-y-1/2"
+      />
+
+      <div
+        className={cn(
+          "absolute top-[68.9%] left-[8.8%] aspect-[310.89/195.86] w-[82.9%] transition-[translate,rotate,scale] duration-700 ease-out motion-reduce:transition-none",
+          headerEmergence[step]
+        )}
+      >
+        <CardFace className="size-full rounded-xl" />
+      </div>
+
+      {/* Over the artwork rather than beside it, so it needs a surface of its
+          own to stay legible against the card — a pill the tints and the card
+          show through, dimmed and blurred. */}
+      <div className="absolute top-4 right-4 rounded-full border border-black/12 bg-white/90 px-4 py-2 backdrop-blur-[2px]">
+        <BrandLockup className="text-[14px]" />
+      </div>
+    </div>
+  )
+}
+
+/** The card-on-a-shelf illustration beside every step — one continuous
  *  backdrop, with only the card's climb marking the progress. */
 export function ShelfIllustration({ step }: { step: Step }) {
   return (
@@ -114,32 +253,11 @@ export function ShelfIllustration({ step }: { step: Step }) {
                   >
                     {/* The export bakes a light background into the card's own
                       rounded corners, so the wrapper clips at a slightly
-                      larger radius to cut those corners away.
-
-                      Hover lives here rather than on the parent because the
-                      parent owns the step climb: sharing one element would
-                      make the two transforms fight. Sitting inside the tilt,
-                      the offset runs along the card's own axis, so it slides
-                      out of the shelf instead of straight up the screen.
-
-                      Reaching for the connect button lifts it too, a shorter
-                      6px against the 8px of touching the card itself — the
-                      same gesture at the distance it is being made from, and
-                      a first inch of the climb the step ends in. Focus counts
-                      as reaching: tabbing to the button shows it as well. */}
-                    <div
-                      onPointerMove={trackPointer}
-                      className="card-sheen h-[203px] w-[326px] overflow-hidden rounded-xl shadow-artwork group-has-[[data-card-hint]:is(:hover,:focus-visible)]:-translate-y-1.5 hover:-translate-y-2 motion-reduce:group-has-[[data-card-hint]:is(:hover,:focus-visible)]:translate-y-0 motion-reduce:hover:translate-y-0"
-                    >
-                      <img
-                        src={cardImage}
-                        alt="Nav Credit Builder Card"
-                        /* Never the hit target, so the sheen offsets are
-                           always measured from the card's own corner rather
-                           than from whatever the pointer landed on. */
-                        className="pointer-events-none size-full object-cover"
-                      />
-                    </div>
+                      larger radius to cut those corners away. Sitting inside
+                      the tilt, its hover offset runs along the card's own
+                      axis, so it slides out of the shelf instead of straight
+                      up the screen. */}
+                    <CardFace className="h-[203px] w-[326px] rounded-xl" />
                   </div>
                 </div>
               </div>
@@ -151,26 +269,7 @@ export function ShelfIllustration({ step }: { step: Step }) {
             />
           </div>
 
-          <div className="flex items-center gap-[17.68px] p-[26.5px]">
-            <div className="relative h-[25.42px] w-[87.07px]">
-              <img
-                src={navIcon}
-                alt=""
-                className="absolute inset-y-0 right-[70.8%] left-0"
-              />
-              <img
-                src={navText}
-                alt="Nav"
-                className="absolute top-[1%] right-[0.4%] bottom-0 left-[33.5%]"
-              />
-            </div>
-            <div className="h-[21px] w-px bg-outline-variant" />
-            <img
-              src={parafinLogo}
-              alt="Parafin"
-              className="h-[25.79px] w-[100.58px] object-contain"
-            />
-          </div>
+          <BrandLockup className="p-[26.5px] text-[25.42px]" />
         </div>
       </div>
     </div>

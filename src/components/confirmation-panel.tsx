@@ -16,11 +16,16 @@ export function ConfirmationPanel({ position }: { position: StepPosition }) {
     <div className="flex flex-col gap-3">
       {/* A beat ahead of the heading, the way the permission picture leads the
           step before it: the confirmation is the picture, and the words
-          explain it. */}
+          explain it. Narrow, the band at the head of the panel is already
+          carrying a picture, and a second one under it would be one too
+          many. */}
       <img
         src={confirmation}
         alt=""
-        className={cn("size-20 max-w-none object-contain", rise(position))}
+        className={cn(
+          "hidden max-w-none object-contain lg:block lg:size-20",
+          rise(position)
+        )}
         style={
           position === "active"
             ? { transitionDelay: `${Math.max(0, heading.delay - 0.05)}s` }
@@ -28,10 +33,10 @@ export function ConfirmationPanel({ position }: { position: StepPosition }) {
         }
       />
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1 lg:gap-2">
         <StepHeading
           position={position}
-          className="type-title-1-emphasized text-foreground"
+          className="type-headline text-foreground lg:type-title-1-emphasized"
         >
           {title}
         </StepHeading>
@@ -39,9 +44,9 @@ export function ConfirmationPanel({ position }: { position: StepPosition }) {
           position={position}
           className="type-body-2 text-balance text-muted-foreground"
         >
-          We review your eligibility automatically. Connecting more bank
-          accounts gives us a fuller picture of your revenue and may help you
-          qualify.
+          We review your eligibility automatically. Offers can take up to 5
+          business days to process. Connecting more bank accounts gives us a
+          fuller picture of your revenue and may help you qualify.
         </StepBody>
       </div>
     </div>
@@ -54,7 +59,7 @@ export function ConfirmationAction() {
   return (
     <Button
       size="lg"
-      className="h-12 w-full rounded-[6px] bg-surface-container-highest type-body-2-emphasized text-foreground shadow-raised hover:bg-secondary"
+      className="h-8 w-full rounded-[6px] bg-surface-container-highest type-body-2-emphasized text-foreground shadow-raised hover:bg-secondary lg:h-12"
     >
       Manage bank connections
     </Button>

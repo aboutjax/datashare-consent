@@ -18,11 +18,15 @@ export function ConsentPanel({ position }: { position: StepPosition }) {
     <div className="flex flex-col gap-3">
       {/* A beat ahead of the heading, the way the plane leads the last step:
           the permission being asked for is the picture, and the words explain
-          it. */}
+          it. Narrow, the band at the head of the panel is already carrying a
+          picture, and a second one under it would be one too many. */}
       <img
         src={needPermission}
         alt=""
-        className={cn("size-20 max-w-none object-contain", rise(position))}
+        className={cn(
+          "hidden max-w-none object-contain lg:block lg:size-20",
+          rise(position)
+        )}
         style={
           position === "active"
             ? { transitionDelay: `${Math.max(0, heading.delay - 0.05)}s` }
@@ -30,16 +34,16 @@ export function ConsentPanel({ position }: { position: StepPosition }) {
         }
       />
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1 lg:gap-2">
         <StepHeading
           position={position}
-          className="type-title-1-emphasized text-foreground"
+          className="type-headline text-foreground lg:type-title-1-emphasized"
         >
           {title}
         </StepHeading>
         <StepBody
           position={position}
-          className="type-body-1 text-balance text-muted-foreground"
+          className="type-body-2 text-balance text-muted-foreground lg:type-body-1"
         >
           Parafin reviews your connected bank data to see what credit limit you
           may qualify for, based on your revenue, not your credit scores.
@@ -87,7 +91,7 @@ export function ConsentAction({ onSubmit }: { onSubmit: () => void }) {
       <Button
         disabled={!checked}
         onClick={onSubmit}
-        className="h-12 w-full rounded-[6px] brand-sheen type-body-1-emphasized shadow-brand-raised hover:bg-primary hover:brightness-105"
+        className="h-8 w-full rounded-[6px] brand-sheen type-body-2-emphasized shadow-brand-raised hover:bg-primary hover:brightness-105 lg:h-12 lg:type-body-1-emphasized"
       >
         Check my eligibility
       </Button>
