@@ -215,13 +215,20 @@ function phaseVariants(
   dials: PhaseDials,
   { selfDelayed = false } = {}
 ): Variants {
-  const arrived = { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }
+  // `transform` as a full string rather than Motion's `y`/`scale` shorthands:
+  // the shorthands animate on the main thread via `requestAnimationFrame` and
+  // drop frames when the browser is busy. The string form is composited on
+  // the GPU, so it stays smooth even while the card climb runs alongside it.
+  const arrived = {
+    opacity: 1,
+    transform: "translateY(0px) scale(1)",
+    filter: "blur(0px)",
+  }
 
   return {
     before: {
       opacity: 0,
-      y: dials.enterY,
-      scale: dials.enterScale,
+      transform: `translateY(${dials.enterY}px) scale(${dials.enterScale})`,
       filter: `blur(${dials.enterBlur}px)`,
     },
     active: selfDelayed
@@ -232,8 +239,7 @@ function phaseVariants(
       : { ...arrived, transition: toMotion(dials.enter) },
     after: {
       opacity: 0,
-      y: dials.exitY,
-      scale: dials.exitScale,
+      transform: `translateY(${dials.exitY}px) scale(${dials.exitScale})`,
       filter: `blur(${dials.exitBlur}px)`,
       transition: toMotion(dials.exit),
     },

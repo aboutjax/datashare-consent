@@ -110,7 +110,11 @@ function CardFace({ className }: { className?: string }) {
     <div
       onPointerMove={trackPointer}
       className={cn(
-        "card-sheen overflow-hidden shadow-artwork group-has-[[data-card-hint]:is(:hover,:focus-visible)]:-translate-y-1.5 hover:-translate-y-2 motion-reduce:group-has-[[data-card-hint]:is(:hover,:focus-visible)]:translate-y-0 motion-reduce:hover:translate-y-0",
+        // `hover:` needs no gating of its own — Tailwind v4 already emits it
+        // under `@media (hover: hover)`. The `group-has-` variant does: its
+        // `:hover` sits inside arbitrary syntax the compiler does not read,
+        // so on touch it would fire on tap and strand the card mid-lift.
+        "card-sheen overflow-hidden shadow-artwork hover:-translate-y-2 group-has-[[data-card-hint]:focus-visible]:-translate-y-1.5 hover-hover:group-has-[[data-card-hint]:hover]:-translate-y-1.5 motion-reduce:hover:translate-y-0 motion-reduce:group-has-[[data-card-hint]:is(:hover,:focus-visible)]:translate-y-0",
         className
       )}
     >

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { CheckIcon } from "lucide-react"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence, motion, useReducedMotionConfig } from "motion/react"
 
 import { BankMark } from "@/components/bank-mark"
 import { SwapPhrase } from "@/components/step-copy"
@@ -62,7 +62,7 @@ export function ActionBento({
   banner: BentoBanner
   children: ReactNode
 }) {
-  const [content, height] = useContentHeight()
+  const [content, box] = useContentHeight(stepKey)
 
   return (
     <motion.div
@@ -74,7 +74,8 @@ export function ActionBento({
       <div className="z-2 -mb-4 overflow-hidden rounded-2xl border border-border bg-card">
         <motion.div
           initial={false}
-          animate={{ height: height ?? "auto" }}
+          animate={{ height: box?.height ?? "auto" }}
+          transition={box?.animate ? undefined : { duration: 0 }}
           className="overflow-hidden"
         >
           {/* Positioned so that an action on its way out, which motion lifts
@@ -150,28 +151,54 @@ export function ActionBento({
 }
 
 /**
- * The natural height of whatever it is given, watched.
+ * The natural height of whatever it is given, watched, along with whether the
+ * last change to it was one worth easing through.
  *
  * Animating the real height rather than reaching for motion's `layout` prop:
  * `layout` fakes a resize with a transform, so the block would look right
  * while the card around it snapped to the new height in a single frame and
- * clipped the banner on the way. A height that actually changes keeps every
- * box in the flow, and the card follows the block down.
+ * clipped the banner on the way. Nor does the fake cross the flow — it is
+ * applied per element that opts in, and this resize has to travel through
+ * three of them: everything inside the block would need counter-scaling to
+ * survive the squash, the banner is a sibling rather than a child, and the
+ * card two levels up is what actually moves on the narrow layout. A height
+ * that actually changes keeps every box in the flow, and the card follows the
+ * block down.
  */
-function useContentHeight() {
+function useContentHeight(stepKey: string) {
   const ref = useRef<HTMLDivElement>(null)
-  const [height, setHeight] = useState<number>()
+  const [box, setBox] = useState<{ height: number; animate: boolean }>()
+  const reduced = useReducedMotionConfig()
+
+  // The step the last measurement belonged to, seeded with the one the block
+  // mounted on so its first reading settles silently. A resize that is not a
+  // step change — a webfont swapping in and rewrapping the consent label, the
+  // window being dragged — is not a transition, and easing through it would
+  // leave the block lagging behind the card that has already resized round it.
+  const measuredAt = useRef(stepKey)
 
   useEffect(() => {
     const element = ref.current
     if (!element) return
 
-    const observer = new ResizeObserver(() => setHeight(element.offsetHeight))
+    // `observe` measures immediately, and by then `popLayout` has lifted the
+    // outgoing action out of the flow — so the first reading after a step
+    // change is already the height the block is settling to.
+    const observer = new ResizeObserver(([entry]) => {
+      setBox({
+        // The entry's own reading rather than `offsetHeight`, which rounds to
+        // whole pixels and can leave the box half a pixel short of its
+        // content — enough to jitter between two measurements of one height.
+        height: entry.borderBoxSize[0].blockSize,
+        animate: !reduced && measuredAt.current !== stepKey,
+      })
+      measuredAt.current = stepKey
+    })
     observer.observe(element)
     return () => observer.disconnect()
-  }, [])
+  }, [stepKey, reduced])
 
-  return [ref, height] as const
+  return [ref, box] as const
 }
 
 /** What the sharing covers, named: the accounts the reader handed over, so no

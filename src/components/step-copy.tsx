@@ -53,7 +53,7 @@ function SplitPhrase({
               Array.from(word).map((character, position) => (
                 <motion.span
                   key={`${character}-${position}`}
-                  className="inline-block will-change-[transform,filter,opacity]"
+                  className="inline-block"
                   variants={unit}
                   style={style}
                 >
@@ -62,7 +62,7 @@ function SplitPhrase({
               ))
             ) : (
               <motion.span
-                className="inline-block will-change-[transform,filter,opacity]"
+                className="inline-block"
                 variants={unit}
                 style={style}
               >

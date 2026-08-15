@@ -518,7 +518,7 @@ function SuccessStage({
   return (
     <Stage action={<PrimaryAction onClick={onDone}>Continue</PrimaryAction>}>
       <div className="flex h-full flex-col items-center justify-center gap-5 text-center">
-        <span className="flex size-14 items-center justify-center rounded-full bg-success text-on-success motion-safe:animate-in motion-safe:zoom-in-50">
+        <span className="flex size-14 items-center justify-center rounded-full bg-success text-on-success motion-safe:animate-in motion-safe:zoom-in-95">
           <CheckIcon className="size-7" />
         </span>
         <div className="flex flex-col gap-1">

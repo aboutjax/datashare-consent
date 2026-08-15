@@ -5,6 +5,7 @@
 @import "@fontsource-variable/manrope";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant hover-hover (@media (hover: hover) and (pointer: fine));
 
 @theme inline {
   /* ---------------------------------------------------------------- *
@@ -519,31 +520,35 @@
     --sheen-x 110ms ease-out,
     --sheen-y 110ms ease-out;
 
-  &:hover {
-    --tilt-strength: 1;
-  }
+  /* Hover is gated behind a fine pointer: on touch, `:hover` fires on tap
+     and would tilt the card with no way to reset it. */
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      --tilt-strength: 1;
+    }
 
-  /* Taller than it is wide, because the light it stands in for is a window
-     or a ceiling strip rather than a bulb. Large and soft — 62% × 88% of the
-     card — so the highlight is a wash rather than a spot, and peaks at 8%
-     white, which on the card's navy is felt more than seen. */
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0;
-    background: radial-gradient(
-      62% 88% at var(--sheen-x) var(--sheen-y),
-      rgb(255 255 255 / 0.08) 0%,
-      rgb(255 255 255 / 0.03) 45%,
-      transparent 80%
-    );
-    transition: opacity 200ms ease-out;
-  }
+    /* Taller than it is wide, because the light it stands in for is a window
+       or a ceiling strip rather than a bulb. Large and soft — 62% × 88% of
+       the card — so the highlight is a wash rather than a spot, and peaks
+       at 8% white, which on the card's navy is felt more than seen. */
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(
+        62% 88% at var(--sheen-x) var(--sheen-y),
+        rgb(255 255 255 / 0.08) 0%,
+        rgb(255 255 255 / 0.03) 45%,
+        transparent 80%
+      );
+      transition: opacity 200ms ease-out;
+    }
 
-  &:hover::after {
-    opacity: 1;
+    &:hover::after {
+      opacity: 1;
+    }
   }
 
   /* The highlight stays — it is a property of the surface, not an animation,
