@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import {
   type DialConfig,
   type TransitionConfig,
@@ -7,11 +7,15 @@ import {
 import { type Transition, type Variants } from "motion/react"
 
 import {
+  allEffects,
   bodyEffects,
   defaultBodyEffect,
   defaultHeadingEffect,
+  defaultPendingEffect,
   effectOptions,
   headingEffects,
+  phaseTotalMs,
+  splitUnits,
   type Phase,
   type TextEffect,
 } from "@/lib/text-effects"
@@ -87,6 +91,52 @@ const stepCopyConfig = {
   },
 } satisfies DialConfig
 
+const pending = allEffects[defaultPendingEffect]
+
+/**
+ * The pending line runs the same catalog, with the swap block the step copy
+ * has no use for: nothing else in the flow replaces a phrase in a slot the
+ * outgoing one still occupies.
+ *
+ * The defaults are `soft-blur-in` as its own spec asks to be used on copy like
+ * this — split per word rather than per character, since the underwriting
+ * lines run past the 40 characters where the spec says a character stagger
+ * stops finishing in time, and blurred 6px rather than 12px, which is what it
+ * calls for below 24px type.
+ */
+const pendingConfig = {
+  effect: {
+    type: "select",
+    options: effectOptions(allEffects),
+    default: defaultPendingEffect,
+  },
+  split: {
+    type: "select",
+    options: ["per-word", "per-character"],
+    default: "per-word",
+  },
+  swap: {
+    // How much of the outgoing phrase's exit the incoming one is allowed to
+    // start under, and the beat that follows it.
+    overlap: slider(pending.swap.overlapMs, 0, 900, 10),
+    microDelay: slider(pending.swap.microDelayMs, 0, 600, 5),
+    // The only value the catalog has no opinion on: it is the reading time,
+    // not the motion. At the shipped spec it puts a line's whole beat near two
+    // seconds, which is the coarser rhythm above the 0.8s banner stripes.
+    hold: slider(700, 0, 3000, 50),
+  },
+  enter: transition(pending.enter),
+  enterStagger: slider(15, 0, 150, 1),
+  enterY: slider(pending.enter.y, -60, 60, 1),
+  enterBlur: slider(6, 0, 24, 0.5),
+  enterScale: slider(pending.enter.scale, 0.5, 1.5, 0.01),
+  exit: transition(pending.exit),
+  exitStagger: slider(pending.exit.staggerMs, 0, 150, 1),
+  exitY: slider(pending.exit.y, -60, 60, 1),
+  exitBlur: slider(6, 0, 24, 0.5),
+  exitScale: slider(pending.exit.scale, 0.5, 1.5, 0.01),
+} satisfies DialConfig
+
 const flowConfig = {
   step: { type: "select", options: [...steps], default: steps[0] },
   replay: { type: "action", label: "Replay entrance" },
@@ -124,6 +174,15 @@ const copyConfig = {
     },
   },
 } satisfies DialConfig
+
+/** What a transition dial is worth in milliseconds, spring or curve. */
+function durationMsOf(config: TransitionConfig) {
+  return (
+    (config.type === "spring"
+      ? (config.visualDuration ?? 0.5)
+      : config.duration) * 1000
+  )
+}
 
 /** DialKit's transition control speaks its own dialect; Motion needs its own. */
 function toMotion(config: TransitionConfig): Transition {
@@ -167,9 +226,9 @@ function phaseVariants(
     },
     active: selfDelayed
       ? (delay: number) => ({
-        ...arrived,
-        transition: { ...toMotion(dials.enter), delay },
-      })
+          ...arrived,
+          transition: { ...toMotion(dials.enter), delay },
+        })
       : { ...arrived, transition: toMotion(dials.enter) },
     after: {
       opacity: 0,
@@ -178,6 +237,26 @@ function phaseVariants(
       filter: `blur(${dials.exitBlur}px)`,
       transition: toMotion(dials.exit),
     },
+  }
+}
+
+/**
+ * The wrapper around a split phrase. It carries the stagger and the entrance
+ * delay only; the units carry every value that moves.
+ */
+function staggerContainer(
+  enterStaggerMs: number,
+  exitStaggerMs: number
+): Variants {
+  return {
+    before: {},
+    active: (delay: number) => ({
+      transition: {
+        staggerChildren: enterStaggerMs / 1000,
+        delayChildren: delay,
+      },
+    }),
+    after: { transition: { staggerChildren: exitStaggerMs / 1000 } },
   }
 }
 
@@ -237,16 +316,7 @@ export function useStepCopyMotion(): StepCopyMotion {
   return useMemo(
     () => ({
       heading: {
-        container: {
-          before: {},
-          active: (delay: number) => ({
-            transition: {
-              staggerChildren: h.enterStagger / 1000,
-              delayChildren: delay,
-            },
-          }),
-          after: { transition: { staggerChildren: h.exitStagger / 1000 } },
-        },
+        container: staggerContainer(h.enterStagger, h.exitStagger),
         unit: phaseVariants(h),
         split: h.split === "per-character" ? "per-character" : "per-word",
         delay: swap.enterDelay / 1000,
@@ -258,6 +328,83 @@ export function useStepCopyMotion(): StepCopyMotion {
     }),
     [h, b, swap.enterDelay, swap.bodyOffset]
   )
+}
+
+export type PendingCopyMotion = {
+  container: Variants
+  unit: Variants
+  split: "per-word" | "per-character"
+  /** How long an arriving phrase waits for the slot the leaving one still holds. */
+  enterDelayMs: (leaving: string) => number
+  /** How long a phrase stays, counted from the moment it was handed the slot. */
+  restMs: (arriving: string, enterDelayMs: number) => number
+}
+
+/**
+ * The live animation contract for the cycling pending line.
+ *
+ * Its rhythm is derived rather than fixed: a phrase leaves, the next one
+ * arrives under the tail of that exit, and only once it has fully landed does
+ * the hold start counting. A slower effect, a longer phrase, or a character
+ * split therefore buys itself the time it needs instead of being cut off by a
+ * timer that was written for something quicker.
+ */
+export function usePendingCopyMotion(): PendingCopyMotion {
+  const dials = useDialKitController("Pending line", pendingConfig, {
+    id: "pending",
+  })
+  const { values, setValues } = dials
+  const effect = values.effect
+
+  // Not on the first run, unlike the step copy: the shipped values here are
+  // the preset as its own notes ask for it at this size, and loading the
+  // preset raw would throw that away before anything had been picked.
+  const picked = useRef<string>(effect)
+  useEffect(() => {
+    if (picked.current === effect) return
+    picked.current = effect
+
+    const chosen = allEffects[effect]
+
+    setValues({
+      split: splitOf(chosen),
+      swap: {
+        overlap: chosen.swap.overlapMs,
+        microDelay: chosen.swap.microDelayMs,
+      },
+      ...presetValues(chosen),
+    })
+  }, [effect, setValues])
+
+  return useMemo(() => {
+    const split =
+      values.split === "per-character" ? "per-character" : "per-word"
+    const units = (phrase: string) => splitUnits(phrase, split)
+
+    const enterPhase = {
+      durationMs: durationMsOf(values.enter),
+      staggerMs: values.enterStagger,
+    }
+    const exitPhase = {
+      durationMs: durationMsOf(values.exit),
+      staggerMs: values.exitStagger,
+    }
+
+    return {
+      container: staggerContainer(values.enterStagger, values.exitStagger),
+      unit: phaseVariants(values),
+      split,
+      enterDelayMs: (leaving: string) =>
+        Math.max(
+          0,
+          phaseTotalMs(exitPhase, units(leaving)) - values.swap.overlap
+        ) + values.swap.microDelay,
+      restMs: (arriving: string, enterDelayMs: number) =>
+        enterDelayMs +
+        phaseTotalMs(enterPhase, units(arriving)) +
+        values.swap.hold,
+    }
+  }, [values])
 }
 
 /**

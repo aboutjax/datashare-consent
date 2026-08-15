@@ -21,6 +21,18 @@ export type Phase = {
   scale: number
 }
 
+/**
+ * The spec's `swap` block: how one phrase hands the slot to the next. The
+ * incoming phrase starts at `exit total - overlap + microDelay`, so a
+ * crossfade keeps both layers alive for a moment and a sequential swap leaves
+ * a beat of empty slot between them.
+ */
+export type Swap = {
+  mode: "crossfade" | "sequential"
+  overlapMs: number
+  microDelayMs: number
+}
+
 export type TextEffect = {
   id: string
   label: string
@@ -28,10 +40,15 @@ export type TextEffect = {
   target: "per-word" | "per-character" | "whole"
   enter: Phase
   exit: Phase
+  swap: Swap
 }
 
 function phase(p: Partial<Phase> & Pick<Phase, "durationMs" | "ease">): Phase {
   return { staggerMs: 0, y: 0, blur: 0, scale: 1, ...p }
+}
+
+function swap(s: Partial<Swap>): Swap {
+  return { mode: "crossfade", overlapMs: 0, microDelayMs: 0, ...s }
 }
 
 /**
@@ -57,6 +74,7 @@ export const headingEffects: Record<string, TextEffect> = {
       y: -14,
       blur: 8,
     }),
+    swap: swap({ overlapMs: 170, microDelayMs: 35 }),
   },
   "soft-blur-in": {
     id: "soft-blur-in",
@@ -78,6 +96,7 @@ export const headingEffects: Record<string, TextEffect> = {
       y: -16,
       blur: 12,
     }),
+    swap: swap({ overlapMs: 300 }),
   },
   "per-word-crossfade": {
     id: "per-word-crossfade",
@@ -95,6 +114,7 @@ export const headingEffects: Record<string, TextEffect> = {
       ease: [0.7, 0, 0.84, 0],
       y: -6,
     }),
+    swap: swap({ overlapMs: 170, microDelayMs: 70 }),
   },
   "spring-scale-in": {
     id: "spring-scale-in",
@@ -112,6 +132,7 @@ export const headingEffects: Record<string, TextEffect> = {
       ease: [0.7, 0, 0.84, 0],
       scale: 0.8,
     }),
+    swap: swap({ microDelayMs: 35 }),
   },
   "per-character-rise": {
     id: "per-character-rise",
@@ -129,6 +150,7 @@ export const headingEffects: Record<string, TextEffect> = {
       ease: [0.7, 0, 0.84, 0],
       y: -24,
     }),
+    swap: swap({ overlapMs: 210 }),
   },
   "bottom-up-letters": {
     id: "bottom-up-letters",
@@ -146,6 +168,7 @@ export const headingEffects: Record<string, TextEffect> = {
       ease: [0.7, 0, 0.84, 0],
       y: -14,
     }),
+    swap: swap({ mode: "sequential", microDelayMs: 35 }),
   },
   "top-down-letters": {
     id: "top-down-letters",
@@ -163,6 +186,7 @@ export const headingEffects: Record<string, TextEffect> = {
       ease: [0.7, 0, 0.84, 0],
       y: 14,
     }),
+    swap: swap({ mode: "sequential", microDelayMs: 35 }),
   },
 }
 
@@ -187,6 +211,7 @@ export const bodyEffects: Record<string, TextEffect> = {
       y: -8,
       scale: 0.94,
     }),
+    swap: swap({ overlapMs: 130, microDelayMs: 20 }),
   },
   "focus-blur-resolve": {
     id: "focus-blur-resolve",
@@ -205,6 +230,7 @@ export const bodyEffects: Record<string, TextEffect> = {
       y: -10,
       blur: 10,
     }),
+    swap: swap({ overlapMs: 160, microDelayMs: 35 }),
   },
   "micro-scale-fade": {
     id: "micro-scale-fade",
@@ -212,6 +238,7 @@ export const bodyEffects: Record<string, TextEffect> = {
     target: "whole",
     enter: phase({ durationMs: 600, ease: [0.32, 0.72, 0, 1], scale: 0.96 }),
     exit: phase({ durationMs: 400, ease: [0.7, 0, 0.84, 0], scale: 0.96 }),
+    swap: swap({ microDelayMs: 20 }),
   },
   "fade-through": {
     id: "fade-through",
@@ -225,11 +252,22 @@ export const bodyEffects: Record<string, TextEffect> = {
       scale: 0.99,
     }),
     exit: phase({ durationMs: 260, ease: [0.4, 0, 1, 1], y: -4 }),
+    swap: swap({ overlapMs: 20, microDelayMs: 60 }),
   },
+}
+
+/**
+ * The whole catalog, for the pending line: it is neither a heading nor a
+ * paragraph, and a phrase that short can carry either half of the library.
+ */
+export const allEffects: Record<string, TextEffect> = {
+  ...headingEffects,
+  ...bodyEffects,
 }
 
 export const defaultHeadingEffect = "blur-out-up"
 export const defaultBodyEffect = "scale-down-fade"
+export const defaultPendingEffect = "soft-blur-in"
 
 /** Effect ids as `{ value, label }`, for a dial's select control. */
 export function effectOptions(effects: Record<string, TextEffect>) {
@@ -237,12 +275,22 @@ export function effectOptions(effects: Record<string, TextEffect>) {
 }
 
 /**
- * How long the slot stays occupied by an outgoing phrase: the last unit only
- * starts leaving after every unit before it has. The incoming step waits this
- * out, minus the overlap it is allowed to steal.
+ * How long a phase takes end to end: the last unit only starts once every unit
+ * before it has. This is what an incoming phrase waits out, minus the overlap
+ * it is allowed to steal, and what a cycling line has to leave room for.
  */
-export function exitTotalMs(phaseValues: Phase, unitCount: number) {
-  return (
-    phaseValues.durationMs + Math.max(0, unitCount - 1) * phaseValues.staggerMs
-  )
+export function phaseTotalMs(
+  { durationMs, staggerMs }: Pick<Phase, "durationMs" | "staggerMs">,
+  unitCount: number
+) {
+  return durationMs + Math.max(0, unitCount - 1) * staggerMs
+}
+
+/** How the units of a phrase are counted, given the split the effect uses. */
+export function splitUnits(text: string, split: "per-word" | "per-character") {
+  const words = text.split(/\s+/).filter(Boolean)
+
+  return split === "per-character"
+    ? words.reduce((total, word) => total + word.length, 0)
+    : words.length
 }

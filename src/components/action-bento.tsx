@@ -3,8 +3,10 @@ import { CheckIcon } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
 import { BankMark } from "@/components/bank-mark"
+import { SwapPhrase } from "@/components/step-copy"
 import { Badge } from "@/components/ui/badge"
 import { type BankConnection } from "@/lib/banks"
+import { usePendingCopyMotion } from "@/lib/step-motion"
 import { cn } from "@/lib/utils"
 
 /**
@@ -16,6 +18,24 @@ export type BentoBanner = {
   tone: "note" | "pending"
   text: string
 }
+
+/** The steps a lender walks through to underwrite a small-business loan, in
+ *  the order they happen. Each is a real check, not a placeholder — the list
+ *  is what makes the wait read as a process rather than a spinner, and the
+ *  order is what makes the process read as a story: money in, money steady,
+ *  money enough, money compared, money offered. */
+const underwritingSteps = [
+  "Checking your eligibility...",
+  "Reviewing your bank transactions...",
+  "Analyzing your revenue patterns...",
+  "Calculating your average monthly deposits...",
+  "Assessing your cash flow stability...",
+  "Verifying your business account history...",
+  "Evaluating your repayment capacity...",
+  "Comparing against similar businesses...",
+  "Determining your credit limit...",
+  "Completing your risk assessment...",
+]
 
 /**
  * The block that closes every step once a bank is linked: the connection the
@@ -120,7 +140,7 @@ export function ActionBento({
                   : "text-left type-caption-1 text-muted-foreground"
               )}
             >
-              {banner.text}
+              {banner.tone === "pending" ? <PendingMessage /> : banner.text}
             </motion.p>
           </AnimatePresence>
         </div>
@@ -187,5 +207,47 @@ function ConnectedAccounts({ connection }: { connection: BankConnection }) {
         Connected
       </Badge>
     </div>
+  )
+}
+
+/**
+ * Cycles through the underwriting steps on whichever `animate-text` spec the
+ * pending dials hold. The parent `motion.p` is keyed by the step, so this
+ * mounts fresh each time the pending banner appears and the cycle starts from
+ * the top.
+ *
+ * Each phrase schedules its own replacement rather than riding a fixed
+ * interval: how long it takes to arrive depends on the effect, the split, and
+ * its own length, and only after it has arrived does the reading time start.
+ * `popLayout` is what lets the swap overlap — the leaving phrase is taken out
+ * of the flow, so the arriving one can hold the same slot while it is still
+ * on screen.
+ */
+function PendingMessage() {
+  const contract = usePendingCopyMotion()
+  const [swap, setSwap] = useState({ index: 0, delayMs: 0 })
+  const phrase = underwritingSteps[swap.index]
+
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () =>
+        setSwap({
+          index: (swap.index + 1) % underwritingSteps.length,
+          delayMs: contract.enterDelayMs(phrase),
+        }),
+      contract.restMs(phrase, swap.delayMs)
+    )
+    return () => window.clearTimeout(timer)
+  }, [swap, phrase, contract])
+
+  return (
+    <AnimatePresence mode="popLayout">
+      <SwapPhrase
+        key={swap.index}
+        text={phrase}
+        motion={contract}
+        delay={swap.delayMs / 1000}
+      />
+    </AnimatePresence>
   )
 }
