@@ -1,4 +1,5 @@
-import { useReducer, useState } from "react"
+import { useEffect, useReducer, useState } from "react"
+import { GrainGradient } from "@paper-design/shaders-react"
 import { AnimatePresence, motion, MotionConfig } from "motion/react"
 
 import { ActionBento, type BentoBanner } from "@/components/action-bento"
@@ -56,6 +57,22 @@ export function ConsentCard() {
 
   const { step: phase, goTo } = useFlowDials(replay)
 
+  // The shader has no ready event, and its canvas is transparent until WebGL
+  // paints its first frame — so revealed immediately it would pop in over the
+  // white card. Two frames (one to mount the canvas, one to paint it) is
+  // enough for the gradient to be there before it is faded in.
+  const [shaderReady, setShaderReady] = useState(false)
+  useEffect(() => {
+    let inner = 0
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setShaderReady(true))
+    })
+    return () => {
+      cancelAnimationFrame(outer)
+      cancelAnimationFrame(inner)
+    }
+  }, [])
+
   return (
     // One transition for everything motion drives, and reduced motion is
     // honoured centrally rather than per element.
@@ -78,6 +95,28 @@ export function ConsentCard() {
       {/* `group` so the illustration can watch the action beside it: the card
           leans towards whoever is reaching for the connect button. */}
       <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-raised lg:min-h-122.5 lg:flex-row">
+        {/* The card's backdrop: an animated grain gradient that fills the
+            panel and sits behind both the shelf illustration and the reading
+            column. `width`/`height` fill the card rather than using the
+            playground's fixed 1280×720 canvas; the rest are the props as
+            given. Aria-hidden and non-interactive — it is texture, not
+            content. */}
+        <GrainGradient
+          aria-hidden
+          className="pointer-events-none absolute inset-0 transition-opacity duration-700 ease-out motion-reduce:transition-none"
+          style={{ opacity: shaderReady ? 1 : 0 }}
+          width="100%"
+          height="100%"
+          colors={["#dedbff", "#d2e4d9"]}
+          colorBack="#ffffff"
+          softness={1}
+          intensity={0}
+          noise={0.21}
+          shape="blob"
+          speed={0.72}
+          scale={2.4}
+        />
+
         {/* Narrow, the artwork and the lockup head the panel, full bleed: the
             wide layout has a column beside the copy to carry both, and this
             one does not. Outside the padded column for that reason — the band
