@@ -71,7 +71,7 @@ export function ActionBento({
       exit={{ opacity: 0 }}
       className="isolate flex flex-col"
     >
-      <div className="z-2 -mb-4 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="z-2 -mb-4 overflow-hidden rounded-2xl bg-card shadow-raised">
         <motion.div
           initial={false}
           animate={{ height: box?.height ?? "auto" }}
