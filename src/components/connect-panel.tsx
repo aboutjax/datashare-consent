@@ -5,6 +5,8 @@ import { rise, type StepPosition } from "@/lib/motion"
 import { useStepCopyMotion, useStepHeading } from "@/lib/step-motion"
 import { cn } from "@/lib/utils"
 
+const creditCard = "/assets/credit-card.png"
+
 export function ConnectPanel({ position }: { position: StepPosition }) {
   const { heading } = useStepCopyMotion()
   const title = useStepHeading("connect")
@@ -13,7 +15,7 @@ export function ConnectPanel({ position }: { position: StepPosition }) {
     <div className="flex flex-col items-start gap-1 lg:gap-2">
       {/* Held to the same beat the copy waits for, so the badge leads the
           heading instead of arriving while the last step is still leaving. */}
-      <Badge
+      {/* <Badge
         variant="warn"
         className={cn("h-5 px-1.5 lg:h-6 lg:px-2", rise(position))}
         style={
@@ -23,7 +25,21 @@ export function ConnectPanel({ position }: { position: StepPosition }) {
         }
       >
         No bank connected yet
-      </Badge>
+      </Badge> */}
+
+      <img
+        src={creditCard}
+        alt=""
+        className={cn(
+          "hidden max-w-none object-contain lg:block lg:size-20",
+          rise(position)
+        )}
+        style={
+          position === "active"
+            ? { transitionDelay: `${Math.max(0, heading.delay - 0.05)}s` }
+            : undefined
+        }
+      />
 
       <StepHeading
         position={position}

@@ -82,10 +82,15 @@ export function ConsentCard() {
           would stack their half-transparent selves and wash the panel out
           mid-swap — and the card could not climb continuously if each step
           drew its own. */}
-      {/* Wide, the floor is the tallest step — consent, whose action carries
-          the checkbox as well as the button — so the panel is that height on
-          every step and never resizes as the flow advances: only the action
-          block moves, and the reading area above absorbs the difference.
+      {/* Wide, the floor is the tallest reading panel (connect's, which
+          carries the credit-card art) plus the tallest action block
+          (consent's, whose action carries the checkbox as well as the
+          button) — the two don't belong to the same step, so the floor has
+          to cover both rather than either alone, or consent would outgrow it
+          by the difference between its own copy and connect's. With that
+          covered, the panel is that height on every step and never resizes
+          as the flow advances: only the action block moves, and the reading
+          area above absorbs the difference.
 
           Narrow there is no floor. Holding the same height there would leave
           the first step with 150px of nothing between its copy and its button,
@@ -94,7 +99,7 @@ export function ConsentCard() {
           moves with the action. */}
       {/* `group` so the illustration can watch the action beside it: the card
           leans towards whoever is reaching for the connect button. */}
-      <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-raised lg:min-h-122.5 lg:flex-row">
+      <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-raised lg:min-h-129 lg:flex-row">
         {/* The card's backdrop: an animated grain gradient that fills the
             panel and sits behind both the shelf illustration and the reading
             column. `width`/`height` fill the card rather than using the
@@ -113,8 +118,8 @@ export function ConsentCard() {
           intensity={0}
           noise={0.21}
           shape="blob"
-          speed={0.72}
-          scale={2.4}
+          speed={2}
+          scale={3}
         />
 
         {/* Narrow, the artwork and the lockup head the panel, full bleed: the
