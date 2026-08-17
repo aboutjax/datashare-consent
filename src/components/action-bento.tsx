@@ -3,7 +3,7 @@ import { CheckIcon } from "lucide-react"
 import { AnimatePresence, motion, useReducedMotionConfig } from "motion/react"
 
 import { BankMark } from "@/components/bank-mark"
-import { SwapPhrase } from "@/components/step-copy"
+// import { SwapPhrase } from "@/components/step-copy"
 import { Badge } from "@/components/ui/badge"
 import { type BankConnection } from "@/lib/banks"
 import { usePendingCopyMotion } from "@/lib/step-motion"
