@@ -169,7 +169,7 @@ const copyConfig = {
   confirming: {
     heading: {
       type: "text",
-      default: "You\u2019re all set! Offers can take up to 5 business days to process.",
+      default: "We're reviewing your eligiblity",
       placeholder: "Confirmation heading",
     },
   },

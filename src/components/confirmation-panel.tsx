@@ -44,9 +44,9 @@ export function ConfirmationPanel({ position }: { position: StepPosition }) {
           position={position}
           className="type-body-2 text-balance text-muted-foreground"
         >
-          We review your eligibility automatically. Offers can take up to 5
-          business days to process. Connecting more bank accounts gives us a
-          fuller picture of your revenue and may help you qualify.
+          Pre-approval offers can take up to 5 business days to process.
+          Connecting more bank accounts gives us a fuller picture of your
+          revenue and may help you qualify.
         </StepBody>
       </div>
     </div>
