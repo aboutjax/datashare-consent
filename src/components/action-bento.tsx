@@ -269,12 +269,13 @@ function PendingMessage() {
 
   return (
     <AnimatePresence mode="popLayout">
-      <SwapPhrase
+      <span>Checking your eligibility</span>
+      {/* <SwapPhrase
         key={swap.index}
         text={phrase}
         motion={contract}
         delay={swap.delayMs / 1000}
-      />
+      /> */}
     </AnimatePresence>
   )
 }
