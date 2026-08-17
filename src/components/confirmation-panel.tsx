@@ -10,7 +10,7 @@ const confirmation = "/assets/confirmation.png"
  *  without the reader. Nothing here asks for anything. */
 export function ConfirmationPanel({ position }: { position: StepPosition }) {
   const { heading } = useStepCopyMotion()
-  const title = useStepHeading("confirming")
+  const title = useStepHeading("reviewing")
 
   return (
     <div className="flex flex-col gap-3">
@@ -44,9 +44,8 @@ export function ConfirmationPanel({ position }: { position: StepPosition }) {
           position={position}
           className="type-body-2 text-balance text-muted-foreground"
         >
-          Pre-approval offers can take up to 5 business days to process.
-          Connecting more bank accounts gives us a fuller picture of your
-          revenue and may help you qualify.
+          We&rsquo;ll email you the moment an offer is available. Nothing
+          here needs you, so you can close this page.
         </StepBody>
       </div>
     </div>
@@ -54,14 +53,23 @@ export function ConfirmationPanel({ position }: { position: StepPosition }) {
 }
 
 /** Neutral, and it leads nowhere in the flow: the review is already running,
- *  so the only thing left to offer is a way back to the connection. */
+ *  so the only thing offered is a reason to add more and a way back to the
+ *  connections already made. The count itself moved up into the banner —
+ *  what's based on shouldn't repeat inside the box it's already fused to. */
 export function ConfirmationAction() {
   return (
-    <Button
-      size="lg"
-      className="h-8 w-full rounded-[6px] bg-surface-container-highest type-body-2-emphasized text-foreground shadow-raised hover:bg-secondary lg:h-12"
-    >
-      Manage bank connections
-    </Button>
+    <>
+      <p className="type-body-2-emphasized text-foreground">
+        Connecting every business bank account gives Parafin the most
+        accurate picture of your cash flow, which may help you qualify.
+      </p>
+
+      <Button
+        size="lg"
+        className="h-8 w-full rounded-[6px] bg-surface-container-highest type-body-2-emphasized text-foreground shadow-raised hover:bg-secondary lg:h-12"
+      >
+        Manage bank accounts
+      </Button>
+    </>
   )
 }

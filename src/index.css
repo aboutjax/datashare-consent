@@ -338,7 +338,7 @@
 
   --sys-surface-background: hsl(240 10% 6%);
   --sys-surface-surface: hsl(240 7% 8%);
-  --sys-surface-surface-dim: hsl(240 6% 13%);
+  --sys-surface-surface-dim: hsl(240 6% 18%);
   --sys-surface-surface-bright: hsl(240 3% 23%);
   --sys-surface-surface-container-lowest: hsl(240 10% 6%);
   --sys-surface-surface-container-low: hsl(240 7% 11%);
@@ -403,6 +403,26 @@
       rgb(94 77 178 / 0) 100%
     ),
     linear-gradient(180deg, rgb(94 77 178 / 0.1) 85%, rgb(0 0 0 / 0.1) 100%),
+    linear-gradient(90deg, rgb(94 77 178) 0%, rgb(94 77 178) 100%);
+}
+
+/* The pre-approved button's lighting: the same brand purple as `brand-sheen`,
+   but lit from two corners instead of one flat panel — a cooler Quartz wash
+   sweeping down from the top-left, and a teal bloom rising into the bottom
+   centre. Layered over `bg-primary` for the same reason `brand-sheen` is:
+   the base colour stays tokenised. */
+@utility prime-sheen {
+  background-image:
+    radial-gradient(
+      120% 120% at 15% 20%,
+      rgb(184 180 243 / 0.55) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      100% 140% at 75% 115%,
+      rgb(76 235 235 / 0.35) 0%,
+      transparent 60%
+    ),
     linear-gradient(90deg, rgb(94 77 178) 0%, rgb(94 77 178) 100%);
 }
 

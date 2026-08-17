@@ -5,11 +5,18 @@ import { cn } from "@/lib/utils"
 
 const cardImage = "/assets/card-visa-business.png"
 const parafinLogo = "/assets/parafin-logo.png"
-const ellipseTop = "/assets/ellipse-top.svg"
-const ellipseBottom = "/assets/ellipse-bottom.svg"
+export const ellipseTop = "/assets/ellipse-top.svg"
+export const ellipseBottom = "/assets/ellipse-bottom.svg"
 const cardShelfLine = "/assets/line-card.svg"
 const navText = "/assets/nav-text.svg"
 const navIcon = "/assets/nav-icon.svg"
+
+/**
+ * The steps this illustration still climbs through. `offer` is deliberately
+ * not one of them — see `offer-illustration.tsx` for why it gets its own
+ * composition instead of a fourth rung on this one.
+ */
+type ShelfStep = Exclude<Step, "offer">
 
 /**
  * How far the card has climbed out of the shelf at each step. It rises and
@@ -18,10 +25,10 @@ const navIcon = "/assets/nav-icon.svg"
  * still being underwritten, so showing all of it would promise an approval
  * that has not happened yet.
  */
-const emergence: Record<Step, string> = {
+const emergence: Record<ShelfStep, string> = {
   connect: "translate-y-12 rotate-15",
   consent: "translate-y-0 rotate-15",
-  confirming: "-translate-y-11 rotate-6",
+  reviewing: "-translate-y-11 rotate-6",
 }
 
 /**
@@ -35,10 +42,10 @@ const emergence: Record<Step, string> = {
  * tenth larger. That last step is the only one that scales — it is the card
  * finally being looked at head on rather than glimpsed.
  */
-const headerEmergence: Record<Step, string> = {
+const headerEmergence: Record<ShelfStep, string> = {
   connect: "translate-y-0 rotate-15 scale-100",
   consent: "-translate-y-[11.2%] rotate-15 scale-100",
-  confirming: "-translate-y-[44.4%] rotate-0 scale-110",
+  reviewing: "-translate-y-[44.4%] rotate-0 scale-110",
 }
 
 /**
@@ -51,10 +58,10 @@ const headerEmergence: Record<Step, string> = {
  * the layout box and the middle of the ink the eye actually sees — the card's
  * top corner down to the bottom of the lockups.
  */
-const balance: Record<Step, string> = {
+const balance: Record<ShelfStep, string> = {
   connect: "-translate-y-[20.6px]",
   consent: "translate-y-[3.4px]",
-  confirming: "translate-y-[14.2px]",
+  reviewing: "translate-y-[14.2px]",
 }
 
 /** How far the card turns when the cursor is at the edge of its face. Small,
@@ -105,7 +112,7 @@ function trackPointer(event: PointerEvent<HTMLDivElement>) {
  * made from, and a first inch of the climb the step ends in. Focus counts as
  * reaching: tabbing to the button shows it as well.
  */
-function CardFace({ className }: { className?: string }) {
+export function CardFace({ className }: { className?: string }) {
   return (
     <div
       onPointerMove={trackPointer}
@@ -135,7 +142,7 @@ function CardFace({ className }: { className?: string }) {
  * inside is in `em`, so the lockup is scaled by setting a font size rather
  * than by keeping a second set of numbers for the smaller layout.
  */
-function BrandLockup({ className }: { className?: string }) {
+export function BrandLockup({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-[0.7em]", className)}>
       {/* Sized rather than stretched between insets: preflight gives an image
@@ -178,7 +185,7 @@ function BrandLockup({ className }: { className?: string }) {
  * share of that band, so the composition holds at any width the narrow layout
  * is given.
  */
-export function CardHeader({ step }: { step: Step }) {
+export function CardHeader({ step }: { step: ShelfStep }) {
   return (
     <div className="relative aspect-[375/164] w-full overflow-hidden lg:hidden">
       {/* Both tints are centred outside the band, as they are outside the
@@ -218,7 +225,7 @@ export function CardHeader({ step }: { step: Step }) {
 
 /** The card-on-a-shelf illustration beside every step — one continuous
  *  backdrop, with only the card's climb marking the progress. */
-export function ShelfIllustration({ step }: { step: Step }) {
+export function ShelfIllustration({ step }: { step: ShelfStep }) {
   return (
     <div className="relative z-0 hidden min-w-0 flex-1 self-stretch overflow-visible lg:block">
       <img

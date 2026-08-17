@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useState } from "react"
 import { GrainGradient } from "@paper-design/shaders-react"
-import { AnimatePresence, motion, MotionConfig } from "motion/react"
+import { MotionConfig } from "motion/react"
 
 import { ActionBento, type BentoBanner } from "@/components/action-bento"
 import {
@@ -9,9 +9,12 @@ import {
 } from "@/components/confirmation-panel"
 import { ConnectAction, ConnectPanel } from "@/components/connect-panel"
 import { ConsentAction, ConsentPanel } from "@/components/consent-panel"
+import { OfferHeader, OfferIllustration } from "@/components/offer-illustration"
+import { OfferAction, OfferPanel } from "@/components/offer-panel"
 import { PlaidLinkDialog } from "@/components/plaid-link-dialog"
 import { CardHeader, ShelfIllustration } from "@/components/shelf-illustration"
-import { type BankConnection } from "@/lib/banks"
+import { defaultConnection, type BankConnection } from "@/lib/banks"
+import { bankIdFromUrl } from "@/lib/deep-link"
 import { settle, steps, type Step, type StepPosition } from "@/lib/motion"
 import { useFlowDials } from "@/lib/step-motion"
 import { cn } from "@/lib/utils"
@@ -37,25 +40,59 @@ function slot(position: StepPosition) {
 
 /**
  * The banner belongs to the step, not to the bento: on the consent step it
- * qualifies the decision still to be made, and once that decision is made it
- * reports what the decision set off.
+ * qualifies the decision still to be made. `reviewing` isn't here — its
+ * banner states what the review is based on, which is a count computed at
+ * render time rather than a fixed line.
  */
-const banners: Record<"consent" | "confirming", BentoBanner> = {
+const banners: Record<"connect" | "consent", BentoBanner> = {
+  connect: {
+    tone: "note",
+    text: "Bank-grade encryption via Plaid. We only read your transaction history.",
+  },
   consent: {
     tone: "note",
     text: "You can opt out of this anytime in Settings → Bank accounts.",
   },
-  confirming: { tone: "pending", text: "Checking your eligibility..." },
 }
 
 export function ConsentCard() {
   const [linkOpen, setLinkOpen] = useState(false)
-  const [connection, setConnection] = useState<BankConnection | null>(null)
   // Replaying remounts the copy, which is the only way to watch an entrance
   // again without walking the flow back to the step before it.
   const [take, replay] = useReducer((n: number) => n + 1, 0)
 
-  const { step: phase, goTo } = useFlowDials(replay)
+  const { step: phase, plan, goTo } = useFlowDials(replay)
+  // Every bank linked so far, oldest first — an array rather than one slot
+  // because "Add another bank" doesn't replace what's already connected, it
+  // adds to it.
+  const [connections, setConnections] = useState<BankConnection[]>([])
+
+  // `connect` is skippable — a deep link can open straight on `consent` or
+  // `reviewing`, and the dev dial can jump there too — so once the flow is
+  // past it without a real connection, a stand-in one is shown rather than
+  // leaving the steps after it talking about a bank nobody linked. Derived
+  // rather than stored: the moment Plaid hands back a real connection,
+  // `connections` itself carries it and this stops applying.
+  const shownConnections =
+    connections.length > 0
+      ? connections
+      : phase === "connect"
+        ? []
+        : [defaultConnection(bankIdFromUrl())]
+
+  // What `reviewing`'s banner is based on: every account across every bank
+  // linked so far, the same total the consent step spells out in its own
+  // row — just folded into the line here instead of repeated as one.
+  const accountCount = shownConnections.reduce(
+    (total, each) => total + each.accounts.length,
+    0
+  )
+  const reviewingBanner: BentoBanner = {
+    tone: "note",
+    text: `Based on ${accountCount} connected bank account${
+      accountCount === 1 ? "" : "s"
+    }`,
+  }
 
   // The shader has no ready event, and its canvas is transparent until WebGL
   // paints its first frame — so revealed immediately it would pop in over the
@@ -77,11 +114,13 @@ export function ConsentCard() {
     // One transition for everything motion drives, and reduced motion is
     // honoured centrally rather than per element.
     <MotionConfig transition={settle} reducedMotion="user">
-      {/* The illustration carries across every step, so it is rendered once
-          here rather than inside each one: crossfading three copies of it
-          would stack their half-transparent selves and wash the panel out
-          mid-swap — and the card could not climb continuously if each step
-          drew its own. */}
+      {/* The illustration carries across the three climbing steps, so it is
+          rendered once here rather than inside each one: crossfading three
+          copies of it would stack their half-transparent selves and wash the
+          panel out mid-swap — and the card could not climb continuously if
+          each step drew its own. `offer` swaps in a wholly different
+          composition instead of a fourth rung on this one — see
+          `offer-illustration.tsx`. */}
       {/* Wide, the floor is the tallest reading panel (connect's, which
           carries the credit-card art) plus the tallest action block
           (consent's, whose action carries the checkbox as well as the
@@ -126,7 +165,7 @@ export function ConsentCard() {
             wide layout has a column beside the copy to carry both, and this
             one does not. Outside the padded column for that reason — the band
             runs to the panel's own edges. */}
-        <CardHeader step={phase} />
+        {phase === "offer" ? <OfferHeader /> : <CardHeader step={phase} />}
 
         <div className="z-10 flex min-w-0 flex-1 flex-col gap-6 p-6 lg:gap-3">
           {/* The steps' copy shares one grid cell, so the reading area is as
@@ -148,53 +187,71 @@ export function ConsentCard() {
             </div>
 
             <div
-              className={slot(positionOf("confirming", phase))}
-              inert={phase !== "confirming"}
+              className={slot(positionOf("reviewing", phase))}
+              inert={phase !== "reviewing"}
             >
-              <ConfirmationPanel position={positionOf("confirming", phase)} />
+              <ConfirmationPanel position={positionOf("reviewing", phase)} />
+            </div>
+
+            <div
+              className={slot(positionOf("offer", phase))}
+              inert={phase !== "offer"}
+            >
+              <OfferPanel position={positionOf("offer", phase)} plan={plan} />
             </div>
           </div>
 
-          {/* The anchored slot. `popLayout` takes the outgoing action out of
-                flow the moment it starts leaving, so the block below settles
-                to its new height once rather than waiting for the fade. */}
-          <AnimatePresence mode="popLayout" initial={false}>
+          {/* The anchored slot: every step's action lives in the same bento,
+              fused to the same banner, so only what's inside crossfades as
+              the flow advances rather than the frame around it. */}
+          <ActionBento
+            connections={
+              phase === "reviewing" || phase === "offer"
+                ? undefined
+                : shownConnections
+            }
+            onAddBank={() => setLinkOpen(true)}
+            stepKey={phase === "offer" ? `offer-${plan}` : phase}
+            banner={
+              phase === "reviewing"
+                ? reviewingBanner
+                : phase === "offer"
+                  ? undefined
+                  : banners[phase]
+            }
+            bannerPosition={phase === "reviewing" ? "top" : "bottom"}
+          >
             {phase === "connect" ? (
-              <motion.div
-                key="connect"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <ConnectAction onConnect={() => setLinkOpen(true)} />
-              </motion.div>
+              <ConnectAction onConnect={() => setLinkOpen(true)} />
+            ) : phase === "consent" ? (
+              <ConsentAction onSubmit={() => goTo("reviewing")} />
+            ) : phase === "reviewing" ? (
+              <ConfirmationAction />
             ) : (
-              <ActionBento
-                key="bento"
-                connection={connection}
-                stepKey={phase}
-                banner={banners[phase]}
-              >
-                {phase === "consent" ? (
-                  <ConsentAction onSubmit={() => goTo("confirming")} />
-                ) : (
-                  <ConfirmationAction />
-                )}
-              </ActionBento>
+              <OfferAction plan={plan} />
             )}
-          </AnimatePresence>
+          </ActionBento>
         </div>
 
-        <ShelfIllustration step={phase} />
+        {phase === "offer" ? (
+          <OfferIllustration />
+        ) : (
+          <ShelfIllustration step={phase} />
+        )}
       </div>
 
       <PlaidLinkDialog
         open={linkOpen}
         onOpenChange={setLinkOpen}
         onComplete={(next) => {
-          setConnection(next)
+          // Appended, not replaced: "Add another bank" from consent or
+          // reviewing raises the connected count in place rather than
+          // starting the list over. Only the first one — walked from
+          // `connect` itself — also carries the flow forward, since a later
+          // add happens after that decision is already made.
+          setConnections((current) => [...current, next])
           setLinkOpen(false)
-          goTo("consent")
+          if (phase === "connect") goTo("consent")
         }}
       />
     </MotionConfig>

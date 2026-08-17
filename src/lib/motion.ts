@@ -1,10 +1,23 @@
 import { cn } from "@/lib/utils"
 
 /** The steps of the flow, in the order they are walked through. */
-export const steps = ["connect", "consent", "confirming"] as const
+export const steps = ["connect", "consent", "reviewing", "offer"] as const
 
 /** One step of the flow. */
 export type Step = (typeof steps)[number]
+
+/**
+ * Which plan the reader is on, and so whether the offer can be acted on or
+ * has to be unlocked first. `free` leads first, because that is the state
+ * anyone arrives in.
+ *
+ * It is not a step: it does not advance, and it changes only the last one —
+ * every step before the offer asks the same thing of both plans.
+ */
+export const plans = ["free", "prime"] as const
+
+/** One subscription state. */
+export type Plan = (typeof plans)[number]
 
 /** Where a step sits relative to the one on screen. */
 export type StepPosition = "before" | "active" | "after"

@@ -50,6 +50,22 @@ const businessAccounts: BankAccount[] = [
   },
 ]
 
+/**
+ * What the flow shows connected when a reader lands past `connect` without
+ * actually walking Plaid — a deep link straight to `consent` or
+ * `reviewing`, or the step jumped from the dev dial. That step is
+ * skippable, so this is what fills the gap it leaves rather than the card
+ * showing a step that talks about a connection nobody made.
+ *
+ * All of the matched bank's accounts, not a subset: the point is a stand-in
+ * that looks like a finished connection, not a choice for the reader to
+ * revisit.
+ */
+export function defaultConnection(bankId?: string | null): BankConnection {
+  const bank = banks.find((each) => each.id === bankId) ?? banks[0]
+  return { bank, accounts: bank.accounts }
+}
+
 export const banks: Bank[] = [
   {
     id: "chase",

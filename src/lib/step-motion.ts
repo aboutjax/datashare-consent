@@ -19,7 +19,13 @@ import {
   type Phase,
   type TextEffect,
 } from "@/lib/text-effects"
-import { steps, type Step } from "@/lib/motion"
+import {
+  planFromUrl,
+  stepFromUrl,
+  syncPlanToUrl,
+  syncStepToUrl,
+} from "@/lib/deep-link"
+import { plans, steps, type Plan, type Step } from "@/lib/motion"
 
 /** `[default, min, max, step?]`, kept as a tuple so DialKit reads it as a slider. */
 function slider(...range: [number, number, number, number?]) {
@@ -138,7 +144,14 @@ const pendingConfig = {
 } satisfies DialConfig
 
 const flowConfig = {
-  step: { type: "select", options: [...steps], default: steps[0] },
+  // `stepFromUrl()` reads `?step=` at module load, so a deep link opens the
+  // dial — and the card — on the step it named rather than always on
+  // `connect`.
+  step: { type: "select", options: [...steps], default: stepFromUrl() },
+  // Which flavor the offer step shows. Lives beside `step` rather than on
+  // its own panel: it is one more thing a deep link, or the dev dial, picks
+  // for the flow to open on.
+  plan: { type: "select", options: [...plans], default: planFromUrl() },
   replay: { type: "action", label: "Replay entrance" },
 } satisfies DialConfig
 
@@ -166,11 +179,18 @@ const copyConfig = {
       placeholder: "Consent heading",
     },
   },
-  confirming: {
+  reviewing: {
     heading: {
       type: "text",
-      default: "We're reviewing your eligiblity",
+      default: "We're reviewing your eligibility",
       placeholder: "Confirmation heading",
+    },
+  },
+  offer: {
+    heading: {
+      type: "text",
+      default: "You're pre-approved",
+      placeholder: "Offer heading",
     },
   },
 } satisfies DialConfig
@@ -438,12 +458,25 @@ export function useFlowDials(onReplay: () => void) {
   })
 
   const { setValues } = dials
+  const step = dials.values.step as Step
+  const plan = dials.values.plan as Plan
+
+  // One-way, dial to address bar: the URL is what a reader can copy, so it
+  // follows the step and the plan rather than either reading back from it
+  // after the first load.
+  useEffect(() => {
+    syncStepToUrl(step)
+  }, [step])
+  useEffect(() => {
+    syncPlanToUrl(plan)
+  }, [plan])
 
   return useMemo(
     () => ({
-      step: dials.values.step as Step,
-      goTo: (step: Step) => setValues({ step }),
+      step,
+      plan,
+      goTo: (next: Step) => setValues({ step: next }),
     }),
-    [dials.values.step, setValues]
+    [step, plan, setValues]
   )
 }

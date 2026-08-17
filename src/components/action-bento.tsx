@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
-import { CheckIcon } from "lucide-react"
 import { AnimatePresence, motion, useReducedMotionConfig } from "motion/react"
 
-import { BankMark } from "@/components/bank-mark"
 // import { SwapPhrase } from "@/components/step-copy"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { type BankConnection } from "@/lib/banks"
 import { usePendingCopyMotion } from "@/lib/step-motion"
 import { cn } from "@/lib/utils"
@@ -47,22 +45,131 @@ const underwritingSteps = [
  * half-transparent copies of the same unchanged fact. Anchored here it simply
  * stays, and only the action inside it is exchanged.
  *
- * Bento fused with the banner: the bento overlaps the banner by 16px so the
- * two share an edge and read as one unit.
+ * Bento fused with the banner: the bento is always the box in front — it
+ * carries the overlap, sitting 16px into the banner on whichever side the
+ * two meet — so the banner reads as behind the card in both directions
+ * rather than swapping which one the reader's eye lands on first.
  */
 export function ActionBento({
-  connection,
+  connections,
+  onAddBank,
   stepKey,
   banner,
+  bannerPosition = "bottom",
   children,
 }: {
-  connection?: BankConnection | null
+  /** Every bank linked so far — plural because "Add another bank" can leave
+   *  more than one behind, and the count below has to add all of them up
+   *  rather than describe just the latest. Omitted where the step doesn't
+   *  itemize the connection at all — `reviewing` folds the count into the
+   *  banner instead, so the row here would just repeat it. */
+  connections?: BankConnection[]
+  /** What "Add another bank" does, next to the connected count. Undefined
+   *  where that offer doesn't apply — a deep link past `connect` shows a
+   *  stand-in connection, not one the reader can add to. */
+  onAddBank?: () => void
   /** Changes when the action does, which is what swaps it. */
   stepKey: string
-  banner: BentoBanner
+  /** Undefined where the step has nothing to append to the box: `offer`
+   *  states its own terms in the bento already, and a note fused underneath
+   *  it would be a second, smaller thing competing with the amount above. */
+  banner?: BentoBanner
+  /** `bottom` reads as an aside about the action just above it; `top` reads
+   *  as the fact that action is scoped to — `reviewing` leads with what the
+   *  wait is based on rather than closing with a reminder of it. */
+  bannerPosition?: "top" | "bottom"
   children: ReactNode
 }) {
   const [content, box] = useContentHeight(stepKey)
+  const top = bannerPosition === "top"
+
+  const bento = (
+    <div
+      className={cn(
+        "z-2 overflow-hidden rounded-2xl bg-card shadow-raised",
+        banner && (top ? "-mt-4" : "-mb-4")
+      )}
+    >
+      <motion.div
+        initial={false}
+        animate={{ height: box?.height ?? "auto" }}
+        transition={box?.animate ? undefined : { duration: 0 }}
+        className="overflow-hidden"
+      >
+        {/* Positioned so that an action on its way out, which motion lifts
+            out of the flow, keeps the offsets it already had. */}
+        <div ref={content} className="relative flex flex-col gap-4 p-4">
+          {connections && connections.length > 0 && (
+            <ConnectedAccounts connections={connections} onAddBank={onAddBank} />
+          )}
+
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={stepKey}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { delay: 0.15 } }}
+              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+              className="flex flex-col gap-4"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </div>
+  )
+
+  const bannerBlock = banner && (
+    // The tint changes in CSS rather than by swapping the box: two boxes
+    // would stack their shadows through the crossfade. Only the line
+    // inside it is exchanged.
+    <div
+      className={cn(
+        "relative z-1 flex min-h-12 items-center overflow-hidden shadow-raised transition-colors duration-500 ease-out motion-reduce:transition-none",
+        banner.tone === "pending" ? "bg-primary-surface" : "bg-surface-dim",
+        top ? "rounded-t-xl pb-4" : "rounded-b-xl pt-4"
+      )}
+    >
+      {/* Fades in and out with the tone rather than mounting with the
+          banner, so the movement starts when the wait does and stops the
+          moment there is nothing left to wait for. */}
+      <AnimatePresence initial={false}>
+        {banner.tone === "pending" && (
+          <motion.div
+            key="stripes"
+            aria-hidden
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="pointer-events-none absolute inset-0 pending-stripes-fade"
+          >
+            {/* Overhangs the banner by more than one stripe period, so the
+                trailing edge never travels into view. */}
+            <div className="absolute -inset-x-8 inset-y-0 pending-stripes motion-reduce:animate-none" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="relative flex-1 py-2 pr-2.5 pl-3">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.p
+            key={stepKey}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { delay: 0.15 } }}
+            exit={{ opacity: 0, transition: { duration: 0.2 } }}
+            className={cn(
+              "text-balance",
+              banner.tone === "pending"
+                ? "text-center type-caption-1-emphasized text-on-primary-container"
+                : "text-left type-caption-1 text-muted-foreground"
+            )}
+          >
+            {banner.tone === "pending" ? <PendingMessage /> : banner.text}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+    </div>
+  )
 
   return (
     <motion.div
@@ -71,81 +178,17 @@ export function ActionBento({
       exit={{ opacity: 0 }}
       className="isolate flex flex-col"
     >
-      <div className="z-2 -mb-4 overflow-hidden rounded-2xl bg-card shadow-raised">
-        <motion.div
-          initial={false}
-          animate={{ height: box?.height ?? "auto" }}
-          transition={box?.animate ? undefined : { duration: 0 }}
-          className="overflow-hidden"
-        >
-          {/* Positioned so that an action on its way out, which motion lifts
-              out of the flow, keeps the offsets it already had. */}
-          <div ref={content} className="relative flex flex-col gap-4 p-4">
-            {connection && <ConnectedAccounts connection={connection} />}
-
-            <AnimatePresence mode="popLayout" initial={false}>
-              <motion.div
-                key={stepKey}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { delay: 0.15 } }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                className="flex flex-col gap-4"
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* The tint changes in CSS rather than by swapping the box: two boxes
-          would stack their shadows through the crossfade. Only the line
-          inside it is exchanged. */}
-      <div
-        className={cn(
-          "relative z-1 flex min-h-12 items-center overflow-hidden rounded-b-xl pt-4 shadow-raised transition-colors duration-500 ease-out motion-reduce:transition-none",
-          banner.tone === "pending" ? "bg-primary-surface" : "bg-surface-dim"
-        )}
-      >
-        {/* Fades in and out with the tone rather than mounting with the
-            banner, so the movement starts when the wait does and stops the
-            moment there is nothing left to wait for. */}
-        <AnimatePresence initial={false}>
-          {banner.tone === "pending" && (
-            <motion.div
-              key="stripes"
-              aria-hidden
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="pointer-events-none absolute inset-0 pending-stripes-fade"
-            >
-              {/* Overhangs the banner by more than one stripe period, so the
-                  trailing edge never travels into view. */}
-              <div className="absolute -inset-x-8 inset-y-0 pending-stripes motion-reduce:animate-none" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="relative flex-1 py-2 pr-2.5 pl-3">
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.p
-              key={stepKey}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: { delay: 0.15 } }}
-              exit={{ opacity: 0, transition: { duration: 0.2 } }}
-              className={cn(
-                "text-balance",
-                banner.tone === "pending"
-                  ? "text-center type-caption-1-emphasized text-on-primary-container"
-                  : "text-left type-caption-1 text-muted-foreground"
-              )}
-            >
-              {banner.tone === "pending" ? <PendingMessage /> : banner.text}
-            </motion.p>
-          </AnimatePresence>
-        </div>
-      </div>
+      {top ? (
+        <>
+          {bannerBlock}
+          {bento}
+        </>
+      ) : (
+        <>
+          {bento}
+          {bannerBlock}
+        </>
+      )}
     </motion.div>
   )
 }
@@ -201,38 +244,38 @@ function useContentHeight(stepKey: string) {
   return [ref, box] as const
 }
 
-/** What the sharing covers, named: the accounts the reader handed over, so no
- *  step asks about banking in the abstract. */
-function ConnectedAccounts({ connection }: { connection: BankConnection }) {
-  return (
-    <div className="flex items-center">
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        {/* The white ring is what separates one mark from the next once the
-            flow can link more than one institution and they overlap. */}
-        <BankMark
-          bank={connection.bank}
-          className="size-6 rounded-lg ring-2 ring-card"
-        />
-        <div className="min-w-0">
-          <p className="truncate type-body-1-emphasized text-foreground">
-            {connection.bank.name}
-          </p>
-          <p className="truncate type-caption-1 text-muted-foreground">
-            {connection.accounts.length === 1
-              ? "1 account"
-              : `${connection.accounts.length} accounts`}
-            {" · "}
-            {connection.accounts
-              .map((account) => `\u2022\u2022${account.mask}`)
-              .join(", ")}
-          </p>
-        </div>
-      </div>
+/** What the sharing covers, named at the level the reader can act on: how
+ *  many accounts are in, not which ones — the institution and its masked
+ *  numbers are Plaid's business, not a fact this step needs to restate.
+ *  Summed across every bank linked so far, so a second trip through Plaid
+ *  raises the count rather than replacing it. */
+function ConnectedAccounts({
+  connections,
+  onAddBank,
+}: {
+  connections: BankConnection[]
+  onAddBank?: () => void
+}) {
+  const count = connections.reduce(
+    (total, connection) => total + connection.accounts.length,
+    0
+  )
 
-      <Badge variant="neutral">
-        <CheckIcon data-icon="inline-start" />
-        Connected
-      </Badge>
+  return (
+    <div className="flex items-center gap-2">
+      <p className="min-w-0 flex-1 truncate type-body-1-emphasized text-foreground">
+        {count === 1
+          ? "1 connected bank account"
+          : `${count} connected bank accounts`}
+      </p>
+
+      <Button
+        size="sm"
+        onClick={onAddBank}
+        className="h-7 shrink-0 rounded-[6px] bg-surface-container-highest px-2 type-caption-1-emphasized text-foreground shadow-raised hover:bg-secondary"
+      >
+        Add another bank
+      </Button>
     </div>
   )
 }
