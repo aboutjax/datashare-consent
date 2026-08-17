@@ -45,8 +45,9 @@ export function ConsentPanel({ position }: { position: StepPosition }) {
           position={position}
           className="type-body-2 text-balance text-muted-foreground lg:type-body-1"
         >
-          Parafin reviews your connected bank data to see what credit limit you
-          may qualify for, based on your revenue, not your credit scores.
+          To see if you qualify, we need to share your bank data with Parafin,
+          our card partner. Eligibility is based on your revenue and other
+          underwriting criteria.
         </StepBody>
       </div>
     </div>

@@ -162,7 +162,7 @@ const copyConfig = {
   consent: {
     heading: {
       type: "text",
-      default: "You're almost there!",
+      default: "We need your permission",
       placeholder: "Consent heading",
     },
   },

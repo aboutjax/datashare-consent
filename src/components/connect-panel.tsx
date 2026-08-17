@@ -51,9 +51,9 @@ export function ConnectPanel({ position }: { position: StepPosition }) {
         position={position}
         className="type-body-2 text-balance text-muted-foreground lg:type-body-1"
       >
-        Your limit is based on your business&rsquo;s revenue and other
-        underwriting criteria. It is reviewed regularly and can increase as your
-        business grows. No business or personal credit checks required.
+        Your limit is based on your revenue and other underwriting criteria. It
+        is reviewed regularly and can increase as your business grows. No
+        business or personal credit checks required.
       </StepBody>
     </div>
   )
