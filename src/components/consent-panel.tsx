@@ -92,7 +92,7 @@ export function ConsentAction({ onSubmit }: { onSubmit: () => void }) {
       <Button
         disabled={!checked}
         onClick={onSubmit}
-        className="h-8 w-full rounded-[6px] brand-sheen type-body-2-emphasized shadow-brand-raised hover:bg-primary hover:brightness-105 lg:h-12 lg:type-body-1-emphasized"
+        className="h-8 w-full rounded-[6px] brand-sheen type-body-2-emphasized shadow-brand-raised hover:bg-primary hover:brightness-105 disabled:bg-surface-dim disabled:bg-none disabled:text-on-surface-dim disabled:opacity-100 disabled:shadow-none lg:h-12 lg:type-body-1-emphasized"
       >
         Check my eligibility
       </Button>
