@@ -1,5 +1,4 @@
 import { StepBody, StepHeading } from "@/components/step-copy"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { rise, type StepPosition } from "@/lib/motion"
 import { useStepCopyMotion, useStepHeading } from "@/lib/step-motion"
