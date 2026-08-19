@@ -7,7 +7,7 @@ const cardImage = "/assets/card-visa-business.png"
 const parafinLogo = "/assets/parafin-logo.png"
 export const ellipseTop = "/assets/ellipse-top.svg"
 export const ellipseBottom = "/assets/ellipse-bottom.svg"
-const cardShelfLine = "/assets/line-card.svg"
+
 const navText = "/assets/nav-text.svg"
 const navIcon = "/assets/nav-icon.svg"
 

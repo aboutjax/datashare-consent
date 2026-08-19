@@ -1,4 +1,3 @@
-import { DialRoot } from "dialkit"
 import "dialkit/styles.css"
 
 import { ConsentCard } from "@/components/consent-card"
