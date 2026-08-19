@@ -10,10 +10,12 @@ import { cn } from "@/lib/utils"
 /**
  * The line fused to the bottom of the bento. A `note` is an aside about what
  * the reader is about to do; `pending` is the state of something already set
- * in motion, so it takes the brand tint and the middle of the line.
+ * in motion, so it takes the brand tint and the middle of the line;
+ * `highlight` takes the same tint as `pending` but holds a static line
+ * rather than cycling — the offer's expiry is a fact, not a process.
  */
 export type BentoBanner = {
-  tone: "note" | "pending"
+  tone: "note" | "pending" | "highlight"
   text: string
 }
 
@@ -70,9 +72,10 @@ export function ActionBento({
   onAddBank?: () => void
   /** Changes when the action does, which is what swaps it. */
   stepKey: string
-  /** Undefined where the step has nothing to append to the box: `offer`
-   *  states its own terms in the bento already, and a note fused underneath
-   *  it would be a second, smaller thing competing with the amount above. */
+  /** Undefined where the step has nothing to append to the box: `connect`
+   *  and `reviewing` state their own terms in the bento already, and a note
+   *  fused underneath would be a second, smaller thing competing with the
+   *  content above. */
   banner?: BentoBanner
   /** `bottom` reads as an aside about the action just above it; `top` reads
    *  as the fact that action is scoped to — `reviewing` leads with what the
@@ -126,7 +129,7 @@ export function ActionBento({
     <div
       className={cn(
         "relative z-1 flex min-h-12 items-center overflow-hidden shadow-raised transition-colors duration-500 ease-out motion-reduce:transition-none",
-        banner.tone === "pending" ? "bg-primary-surface" : "bg-surface-dim",
+        banner.tone === "note" ? "bg-surface-dim" : "bg-primary-surface",
         top ? "rounded-t-xl pb-4" : "rounded-b-xl pt-4"
       )}
     >
@@ -159,9 +162,9 @@ export function ActionBento({
             exit={{ opacity: 0, transition: { duration: 0.2 } }}
             className={cn(
               "text-balance",
-              banner.tone === "pending"
-                ? "text-center type-caption-1-emphasized text-on-primary-container"
-                : "text-left type-caption-1 text-muted-foreground"
+              banner.tone === "note"
+                ? "text-left type-caption-1 text-muted-foreground"
+                : "text-center type-caption-1-emphasized text-on-primary-container"
             )}
           >
             {banner.tone === "pending" ? <PendingMessage /> : banner.text}

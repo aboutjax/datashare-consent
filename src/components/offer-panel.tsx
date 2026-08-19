@@ -86,7 +86,6 @@ export function OfferAction({ plan }: { plan: Plan }) {
           <span className="type-display-2-emphasized text-foreground">
             $12,000
           </span>
-          <span className="type-body-1 text-muted-foreground">/month</span>
         </p>
       </div>
 

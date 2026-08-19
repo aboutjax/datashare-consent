@@ -13,6 +13,7 @@ import { OfferHeader, OfferIllustration } from "@/components/offer-illustration"
 import { OfferAction, OfferPanel } from "@/components/offer-panel"
 import { PlaidLinkDialog } from "@/components/plaid-link-dialog"
 import { CardHeader, ShelfIllustration } from "@/components/shelf-illustration"
+import { StepNav } from "@/components/step-nav"
 import { defaultConnection, type BankConnection } from "@/lib/banks"
 import { bankIdFromUrl } from "@/lib/deep-link"
 import { settle, steps, type Step, type StepPosition } from "@/lib/motion"
@@ -40,13 +41,19 @@ function slot(position: StepPosition) {
 
 /**
  * The banner belongs to the step, not to the bento: on the consent step it
- * qualifies the decision still to be made. `reviewing` and `connect` no
- * longer carry one — the bento stands on its own there.
+ * qualifies the decision still to be made; on the offer step it carries the
+ * offer's expiry as a `highlight` — the same brand tint as `pending` but
+ * static, since a deadline is a fact, not a process. `reviewing` and
+ * `connect` carry none — the bento stands on its own there.
  */
-const banners: Record<"consent", BentoBanner> = {
+const banners: Record<"consent" | "offer", BentoBanner> = {
   consent: {
     tone: "note",
     text: "You can opt out of this at any time before activating a Nav Credit Builder Card in Settings → Bank accounts.",
+  },
+  offer: {
+    tone: "highlight",
+    text: "Offer expires in 3 days",
   },
 }
 
@@ -56,7 +63,7 @@ export function ConsentCard() {
   // again without walking the flow back to the step before it.
   const [take, replay] = useReducer((n: number) => n + 1, 0)
 
-  const { step: phase, plan, goTo } = useFlowDials(replay)
+  const { step: phase, plan, goTo, goToPlan } = useFlowDials(replay)
   // Every bank linked so far, oldest first — an array rather than one slot
   // because "Add another bank" doesn't replace what's already connected, it
   // adds to it.
@@ -103,6 +110,8 @@ export function ConsentCard() {
     // One transition for everything motion drives, and reduced motion is
     // honoured centrally rather than per element.
     <MotionConfig transition={settle} reducedMotion="user">
+      <StepNav step={phase} goTo={goTo} plan={plan} goToPlan={goToPlan} />
+
       {/* The illustration carries across the three climbing steps, so it is
           rendered once here rather than inside each one: crossfading three
           copies of it would stack their half-transparent selves and wash the
@@ -201,7 +210,13 @@ export function ConsentCard() {
             }
             onAddBank={() => setLinkOpen(true)}
             stepKey={phase === "offer" ? `offer-${plan}` : phase}
-            banner={phase === "consent" ? banners.consent : undefined}
+            banner={
+              phase === "consent"
+                ? banners.consent
+                : phase === "offer"
+                  ? banners.offer
+                  : undefined
+            }
           >
             {phase === "connect" ? (
               <ConnectAction onConnect={() => setLinkOpen(true)} />

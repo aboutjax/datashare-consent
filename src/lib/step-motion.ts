@@ -476,6 +476,7 @@ export function useFlowDials(onReplay: () => void) {
       step,
       plan,
       goTo: (next: Step) => setValues({ step: next }),
+      goToPlan: (next: Plan) => setValues({ plan: next }),
     }),
     [step, plan, setValues]
   )
