@@ -40,18 +40,13 @@ function slot(position: StepPosition) {
 
 /**
  * The banner belongs to the step, not to the bento: on the consent step it
- * qualifies the decision still to be made. `reviewing` isn't here — its
- * banner states what the review is based on, which is a count computed at
- * render time rather than a fixed line.
+ * qualifies the decision still to be made. `reviewing` and `connect` no
+ * longer carry one — the bento stands on its own there.
  */
-const banners: Record<"connect" | "consent", BentoBanner> = {
-  connect: {
-    tone: "note",
-    text: "Bank-grade encryption via Plaid. We only read your transaction history.",
-  },
+const banners: Record<"consent", BentoBanner> = {
   consent: {
     tone: "note",
-    text: "You can opt out of this anytime in Settings → Bank accounts.",
+    text: "You can opt out of this at any time before activating a Nav Credit Builder Card in Settings → Bank accounts.",
   },
 }
 
@@ -80,19 +75,13 @@ export function ConsentCard() {
         ? []
         : [defaultConnection(bankIdFromUrl())]
 
-  // What `reviewing`'s banner is based on: every account across every bank
-  // linked so far, the same total the consent step spells out in its own
-  // row — just folded into the line here instead of repeated as one.
+  // What `reviewing`'s action line is based on: every account across every
+  // bank linked so far, the same total the consent step spells out in its own
+  // row — just folded into the action here instead of repeated as one.
   const accountCount = shownConnections.reduce(
     (total, each) => total + each.accounts.length,
     0
   )
-  const reviewingBanner: BentoBanner = {
-    tone: "note",
-    text: `Based on ${accountCount} connected bank account${
-      accountCount === 1 ? "" : "s"
-    }`,
-  }
 
   // The shader has no ready event, and its canvas is transparent until WebGL
   // paints its first frame — so revealed immediately it would pop in over the
@@ -202,8 +191,8 @@ export function ConsentCard() {
           </div>
 
           {/* The anchored slot: every step's action lives in the same bento,
-              fused to the same banner, so only what's inside crossfades as
-              the flow advances rather than the frame around it. */}
+              so only what's inside crossfades as the flow advances rather
+              than the frame around it. */}
           <ActionBento
             connections={
               phase === "reviewing" || phase === "offer"
@@ -212,21 +201,14 @@ export function ConsentCard() {
             }
             onAddBank={() => setLinkOpen(true)}
             stepKey={phase === "offer" ? `offer-${plan}` : phase}
-            banner={
-              phase === "reviewing"
-                ? reviewingBanner
-                : phase === "offer"
-                  ? undefined
-                  : banners[phase]
-            }
-            bannerPosition={phase === "reviewing" ? "top" : "bottom"}
+            banner={phase === "consent" ? banners.consent : undefined}
           >
             {phase === "connect" ? (
               <ConnectAction onConnect={() => setLinkOpen(true)} />
             ) : phase === "consent" ? (
               <ConsentAction onSubmit={() => goTo("reviewing")} />
             ) : phase === "reviewing" ? (
-              <ConfirmationAction />
+              <ConfirmationAction accountCount={accountCount} />
             ) : (
               <OfferAction plan={plan} />
             )}

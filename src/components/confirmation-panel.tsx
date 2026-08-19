@@ -44,8 +44,9 @@ export function ConfirmationPanel({ position }: { position: StepPosition }) {
           position={position}
           className="type-body-2 text-balance text-muted-foreground"
         >
-          We&rsquo;ll email you the moment an offer is available. Nothing
-          here needs you, so you can close this page.
+          Connecting more bank accounts gives us a fuller picture of your
+          revenue and may help you qualify. If you get an offer, upgrade to an
+          eligible Nav Prime plan to apply.
         </StepBody>
       </div>
     </div>
@@ -53,22 +54,26 @@ export function ConfirmationPanel({ position }: { position: StepPosition }) {
 }
 
 /** Neutral, and it leads nowhere in the flow: the review is already running,
- *  so the only thing offered is a reason to add more and a way back to the
- *  connections already made. The count itself moved up into the banner —
- *  what's based on shouldn't repeat inside the box it's already fused to. */
-export function ConfirmationAction() {
+ *  so the only thing offered is the count of what's being reviewed and a way
+ *  back to the connections already made. The count lives here rather than in
+ *  a banner — there's no aside to make about a box that only states a fact. */
+export function ConfirmationAction({
+  accountCount,
+}: {
+  accountCount: number
+}) {
   return (
     <>
       <p className="type-body-2-emphasized text-foreground">
-        Connecting every business bank account gives Parafin the most
-        accurate picture of your cash flow, which may help you qualify.
+        Reviewing {accountCount} connected bank account
+        {accountCount === 1 ? "" : "s"}
       </p>
 
       <Button
         size="lg"
-        className="h-8 w-full rounded-[6px] bg-surface-container-highest type-body-2-emphasized text-foreground shadow-raised hover:bg-secondary lg:h-12"
+        className="h-8 w-full rounded-[6px] bg-surface-container-highest type-body-2-emphasized text-foreground shadow-raised hover:bg-secondary lg:h-12 lg:type-body-1-emphasized"
       >
-        Manage bank accounts
+        Manage bank connections
       </Button>
     </>
   )

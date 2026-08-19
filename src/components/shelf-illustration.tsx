@@ -121,7 +121,7 @@ export function CardFace({ className }: { className?: string }) {
         // under `@media (hover: hover)`. The `group-has-` variant does: its
         // `:hover` sits inside arbitrary syntax the compiler does not read,
         // so on touch it would fire on tap and strand the card mid-lift.
-        "card-sheen overflow-hidden shadow-artwork hover:-translate-y-2 group-has-[[data-card-hint]:focus-visible]:-translate-y-1.5 hover-hover:group-has-[[data-card-hint]:hover]:-translate-y-1.5 motion-reduce:hover:translate-y-0 motion-reduce:group-has-[[data-card-hint]:is(:hover,:focus-visible)]:translate-y-0",
+        "card-sheen overflow-hidden shadow-artwork group-has-[[data-card-hint]:focus-visible]:-translate-y-1.5 hover:-translate-y-2 motion-reduce:group-has-[[data-card-hint]:is(:hover,:focus-visible)]:translate-y-0 motion-reduce:hover:translate-y-0 hover-hover:group-has-[[data-card-hint]:hover]:-translate-y-1.5",
         className
       )}
     >
@@ -249,7 +249,7 @@ export function ShelfIllustration({ step }: { step: ShelfStep }) {
             balance[step]
           )}
         >
-          <div className="flex flex-col items-center gap-[1.1px]">
+          <div className="flex flex-col items-center">
             <div className="relative h-[168px] w-[420px]">
               {/* The clip reaches above the layout box so a risen card is only
                 ever cut off at the shelf line, never at its top corner. It is
@@ -273,11 +273,6 @@ export function ShelfIllustration({ step }: { step: ShelfStep }) {
                 </div>
               </div>
             </div>
-            <img
-              src={cardShelfLine}
-              alt=""
-              className="pointer-events-none w-[391.26px] mix-blend-multiply"
-            />
           </div>
 
           <BrandLockup className="p-[26.5px] text-[25.42px]" />

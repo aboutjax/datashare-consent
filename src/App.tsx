@@ -16,7 +16,7 @@ export function App() {
 
       {/* Renders nothing in a production build unless asked to, so the tuning
           panel can live in the tree rather than behind a flag. */}
-      <DialRoot position="top-right" />
+      {/* <DialRoot position="top-right" /> */}
     </div>
   )
 }

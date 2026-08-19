@@ -1,5 +1,6 @@
 import { useState } from "react"
 
+import { ConsentDisclosureDialog } from "@/components/consent-disclosure-dialog"
 import { StepBody, StepHeading } from "@/components/step-copy"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -45,9 +46,9 @@ export function ConsentPanel({ position }: { position: StepPosition }) {
           position={position}
           className="type-body-2 text-balance text-muted-foreground lg:type-body-1"
         >
-          To see if you qualify, we need to share your bank data with Parafin,
-          our card partner. Eligibility is based on your revenue and other
-          underwriting criteria.
+          To see if you qualify, we need to share access to your bank account
+          data with Parafin, our card partner. If you get an offer, you can
+          upgrade to an eligible Nav Prime plan to apply.
         </StepBody>
       </div>
     </div>
@@ -55,16 +56,19 @@ export function ConsentPanel({ position }: { position: StepPosition }) {
 }
 
 /** The consent itself. The checkbox state lives here so it is discarded with
- *  the step rather than outliving the question it answers. */
+ *  the step rather than outliving the question it answers. The disclosure
+ *  dialog's open state lives here for the same reason — it is part of the
+ *  question, not something that outlives it. */
 export function ConsentAction({ onSubmit }: { onSubmit: () => void }) {
   const [checked, setChecked] = useState(false)
+  const [disclosureOpen, setDisclosureOpen] = useState(false)
 
   return (
     <>
       <div className="flex items-start gap-2">
-        {/* Matches the label's 20px line box so the control centers on the
+        {/* Matches the label's 16px line box so the control centers on the
             first line rather than the whole block. */}
-        <span className="flex h-5 shrink-0 items-center">
+        <span className="flex h-4 shrink-0 items-center">
           <Checkbox
             id="consent"
             checked={checked}
@@ -74,17 +78,19 @@ export function ConsentAction({ onSubmit }: { onSubmit: () => void }) {
         </span>
         <Label
           htmlFor="consent"
-          className="cursor-pointer type-body-2 text-foreground"
+          className="cursor-pointer type-caption-1 text-foreground"
         >
           <span>
-            I have read and agree to the{" "}
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
+            I authorize Nav to{" "}
+            <button
+              type="button"
+              onClick={() => setDisclosureOpen(true)}
               className="underline decoration-muted-foreground/40 underline-offset-2 transition-colors hover:decoration-foreground"
             >
-              Terms and Conditions.
-            </a>
+              share access to my bank account data
+            </button>{" "}
+            with Parafin to check my eligibility for the Nav Credit Builder Card.
+            This does not affect your credit scores.
           </span>
         </Label>
       </div>
@@ -96,6 +102,11 @@ export function ConsentAction({ onSubmit }: { onSubmit: () => void }) {
       >
         Check my eligibility
       </Button>
+
+      <ConsentDisclosureDialog
+        open={disclosureOpen}
+        onOpenChange={setDisclosureOpen}
+      />
     </>
   )
 }

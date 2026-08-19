@@ -51,16 +51,16 @@ export function ConnectPanel({ position }: { position: StepPosition }) {
         position={position}
         className="type-body-2 text-balance text-muted-foreground lg:type-body-1"
       >
-        Your limit is based on your revenue and other underwriting criteria. It
-        is reviewed regularly and can increase as your business grows. No
-        business or personal credit checks required.
+        Your limit is based on your revenue and other underwriting criteria. No
+        business or personal credit checks required. If you get an offer,
+        upgrade to an eligible Nav Prime plan to apply.
       </StepBody>
     </div>
   )
 }
 
-/** Sits in the same anchored bento as every other step's action; the banner
- *  fused beneath it carries the encryption note, so this is just the button. */
+/** Sits in the same anchored bento as every other step's action; the bento
+ *  stands on its own at this step, so this is just the button. */
 export function ConnectAction({ onConnect }: { onConnect: () => void }) {
   return (
     // Marks this as the control the card answers to: reaching for it lifts
