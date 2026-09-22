@@ -5,7 +5,7 @@ import { useStepCopyMotion, useStepHeading } from "@/lib/step-motion"
 import { cn } from "@/lib/utils"
 
 const hiFive = "/assets/hi-five.png"
-const primeMark = "/assets/nav-prime-mark.svg"
+const upgradeArrow = "/assets/upgrade-arrow.svg"
 
 /** What the offer is conditioned on, in the reader's own plan. `free` still
  *  has a plan to join before the offer is theirs to take; `prime` already
@@ -94,7 +94,7 @@ export function OfferAction({ plan }: { plan: Plan }) {
           data-card-hint
           className="h-8 w-full gap-1.5 rounded-[6px] prime-sheen type-body-2-emphasized shadow-brand-raised hover:brightness-105 lg:h-12 lg:type-body-1-emphasized"
         >
-          <img src={primeMark} alt="" className="size-4" />
+          <img src={upgradeArrow} alt="" className="size-6" />
           Upgrade to apply
         </Button>
       ) : (
